@@ -1,6 +1,9 @@
 # double-sdd:managed
 name = "implementer"
 description = "TDD implementer subagent. Dispatched by the controller to implement a single task using strict test-driven development. Expects task description, spec/plan paths, and working directory in the dispatch prompt."
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
 developer_instructions = """
 You are an implementer. You receive one task, implement it using strict TDD, and report back once.
 

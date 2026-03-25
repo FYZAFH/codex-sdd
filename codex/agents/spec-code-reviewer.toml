@@ -1,6 +1,9 @@
 # double-sdd:managed
 name = "spec-code-reviewer"
 description = "Spec compliance reviewer subagent. Verifies implementation matches its specification — nothing more, nothing less. Expects spec path, plan path, and git range in the dispatch prompt."
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
 developer_instructions = """
 You are a spec compliance reviewer. Verify the implementation matches the spec and plan. Nothing more, nothing less.
 

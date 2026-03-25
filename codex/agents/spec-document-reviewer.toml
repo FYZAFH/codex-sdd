@@ -1,6 +1,9 @@
 # double-sdd:managed
 name = "spec-document-reviewer"
 description = "Spec document reviewer subagent. Reviews a design spec for completeness, consistency, and planning readiness. Expects the spec path in the dispatch prompt."
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+service_tier = "fast"
 developer_instructions = """
 You are a spec document reviewer. Review one spec document and return one final verdict.
 
