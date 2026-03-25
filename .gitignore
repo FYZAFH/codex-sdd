@@ -1,0 +1,4 @@
+.DS_Store
+.worktrees/
+__pycache__/
+scripts/__pycache__/
