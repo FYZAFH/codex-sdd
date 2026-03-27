@@ -76,9 +76,6 @@ bash tests/shared/test-codex-project-install.sh
 
 ## Notes
 
-- Codex orchestration lives in `.codex/config.toml`.
-- Codex subagents live in `.codex/agents/*.toml`.
-- Codex does not use `AGENTS.md` or `bootstrap.md` prompt injection for this workflow.
 - Installed subagents have their skills disabled explicitly through `[[skills.config]]` entries.
 
 ## License
