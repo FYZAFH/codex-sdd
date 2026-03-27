@@ -7,19 +7,43 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write a comprehensive implementation plan assuming the implementer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
-Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
+Assume the implementer is a skilled developer, but knows almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
-**Context:** Write the plan against the current repo state. The execution workflow may create or switch to a dedicated worktree later.
+**Context:** Write the plan against the current repo state.
 
 **Save plans to:** `docs/double-sdd/plans/YYYY-MM-DD-<feature-name>.md`
 
 ## Scope Check
 
-If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during `writing-specs`. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
+This skill writes one plan file for the current requested scope.
+
+If the request appears to span multiple independent features, modules, or deliverables, raise that concern to the user before finalizing the plan. Do not silently split the work into multiple plan files unless the user explicitly wants that.
+
+The user owns the product boundary. Your job is to plan the requested scope clearly, not to quietly redefine it.
+
+## Execution Model
+
+This plan will later be executed from a dedicated `.worktrees/...` worktree by subagents.
+
+Write the plan so it can be followed from repository state alone:
+- use repo-relative paths
+- use explicit commands
+- do not rely on unstated local context, editor state, or session memory
+
+The normal execution model is:
+- execution proceeds sequentially through the plan
+- one implementation task is typically handled by one fresh implementer subagent
+- after each task is implemented, it goes through review before the next task continues
+- the orchestrator will keep driving the plan until the full plan is complete unless it hits a real unresolved blocker
+
+Write tasks so they fit that execution model:
+- each task should be self-contained enough for one implementer subagent to complete
+- each task should have clear spec boundaries and clear verification steps
+- each task should leave the repo in a state that can be reviewed before moving on
 
 ## File Structure
 
@@ -103,34 +127,39 @@ git commit -m "feat: add specific feature"
 ````
 
 ## Remember
+
 - Exact file paths always
 - Complete code in plan (not "add validation")
 - Exact commands with expected output
 - Reference relevant skills by name
 - DRY, YAGNI, TDD, frequent commits
+- This plan will later be executed from a dedicated worktree in a sequential subagent workflow, so write it to be reproducible from repo state alone
 - If you discover an undiscussed question or ambiguity while writing the plan, stop and ask the user. Do not fill gaps with assumptions.
 
 ## Plan Review Loop
 
-After completing each chunk of the plan:
+After completing the full plan document:
 
 1. Dispatch `plan-document-reviewer` via `spawn_agent`
    - `agent_type: plan-document-reviewer`
    - `fork_context: false`
-   - Provide: the specific chunk being reviewed and the path to the spec document
+   - Provide exactly these fields in the review message:
+     - `Spec: <path to the spec document>`
+     - `Plan: <path to the plan document>`
    - Never pass your session history or chain-of-thought
 2. If ❌ Issues Found:
-   - Fix the issues in the chunk
-   - Re-dispatch reviewer for that chunk
+   - Fix the issues in the plan
+   - Re-dispatch reviewer against the updated full plan document
    - Repeat until ✅ Approved
-3. If ✅ Approved: proceed to next chunk (or execution handoff if last chunk)
-
-**Chunk boundaries:** Use `## Chunk N: <name>` headings to delimit chunks. Each chunk should be ≤1000 lines and logically self-contained.
+3. If ✅ Approved: proceed to the execution handoff
 
 **Review loop guidance:**
-- Same agent that wrote the plan fixes it (preserves context)
+- Review the full plan file by default. Do not invent internal "chunks" or review arbitrary sections in isolation.
+- If the plan becomes so long that it is difficult to review or execute coherently, raise that concern to the user. Do not automatically split it into multiple plan files unless the user explicitly wants that.
+- The same agent that wrote the plan fixes it (preserves context)
 - If loop exceeds 5 iterations, surface to human for guidance
-- Reviewers are advisory - explain disagreements if you believe feedback is incorrect
+- Reviewer feedback is advisory, not authoritative. Evaluate it against the spec, the repo reality, and the execution needs of the plan.
+- If reviewer feedback is incorrect, overreaching, or not worth applying, keep the plan and record the reason briefly instead of obeying mechanically.
 
 ## Execution Handoff
 

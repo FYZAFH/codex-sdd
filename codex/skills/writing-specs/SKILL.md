@@ -1,6 +1,6 @@
 ---
 name: writing-specs
-description: "You MUST use this before any implementation work that needs a spec. Clarifies requirements, explores approaches, validates the design, and writes the approved spec before planning."
+description: "You MUST use this before any implementation work. Clarifies requirements, explores approaches, validates the design, and writes the approved spec before planning."
 ---
 
 # Writing Specs
