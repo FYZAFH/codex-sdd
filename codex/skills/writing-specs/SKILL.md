@@ -1,9 +1,9 @@
 ---
-name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+name: writing-specs
+description: "You MUST use this before any implementation work that needs a spec. Clarifies requirements, explores approaches, validates the design, and writes the approved spec before planning."
 ---
 
-# Brainstorming Ideas Into Designs
+# Writing Specs
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
@@ -62,7 +62,7 @@ You MUST create a task for each of these items and complete them in order:
 12. If the user requests changes, update the spec, re-run spec review, and ask again if needed.
 13. Only after the written spec is approved do you invoke `writing-plans`.
 
-**The terminal state is invoking writing-plans.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is invoking writing-plans.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after `writing-specs` is `writing-plans`.
 
 ## The Process
 
@@ -70,7 +70,7 @@ You MUST create a task for each of these items and complete them in order:
 
 - Check out the current project state first (files, docs, recent commits)
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
+- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then take the first sub-project through the normal `writing-specs` flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions

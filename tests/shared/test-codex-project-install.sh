@@ -30,14 +30,14 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     echo "Codex install should not modify AGENTS.md" >&2
     exit 1
 fi
-test -d "${PROJECT_ROOT}/.agents/skills/brainstorming"
+test -d "${PROJECT_ROOT}/.agents/skills/writing-specs"
 test -d "${PROJECT_ROOT}/.agents/skills/code-review"
-grep -qx 'double-sdd' "${PROJECT_ROOT}/.agents/skills/brainstorming/.double-sdd-owner"
+grep -qx 'double-sdd' "${PROJECT_ROOT}/.agents/skills/writing-specs/.double-sdd-owner"
 test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-document-reviewer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
-grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/brainstorming/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
+grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/writing-specs/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
@@ -52,8 +52,8 @@ grep -q ".double-sdd/" "${PROJECT_ROOT}/.git/info/exclude"
 generated_uninstall_output="$("${PROJECT_ROOT}/.double-sdd/uninstall" 2>&1)"
 printf '%s\n' "$generated_uninstall_output" | grep -q "Removing project-local double-SDD helpers"
 
-if [ -e "${PROJECT_ROOT}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after generated uninstall" >&2
+if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after generated uninstall" >&2
     exit 1
 fi
 
@@ -89,8 +89,8 @@ fi
 "${REPO_ROOT}/scripts/install-codex-project.sh" --project-root "$PROJECT_ROOT"
 "${REPO_ROOT}/scripts/uninstall-codex-project.sh" --project-root "$PROJECT_ROOT"
 
-if [ -e "${PROJECT_ROOT}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after uninstall" >&2
+if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after uninstall" >&2
     exit 1
 fi
 

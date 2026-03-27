@@ -36,14 +36,14 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
     echo "Codex bootstrap global install should not modify AGENTS.md" >&2
     exit 1
 fi
-test -d "${TEST_HOME}/.agents/skills/brainstorming"
+test -d "${TEST_HOME}/.agents/skills/writing-specs"
 test -d "${TEST_HOME}/.agents/skills/code-review"
 test -f "${CODEX_HOME_DIR}/agents/implementer.toml"
 test -f "${CODEX_HOME_DIR}/agents/spec-document-reviewer.toml"
 test -f "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:managed$' "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${CODEX_HOME_DIR}/agents/implementer.toml"
-grep -Fq "path = \"${TEST_HOME}/.agents/skills/brainstorming/SKILL.md\"" "${CODEX_HOME_DIR}/agents/implementer.toml"
+grep -Fq "path = \"${TEST_HOME}/.agents/skills/writing-specs/SKILL.md\"" "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -q '^compact_prompt = """$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${CODEX_HOME_DIR}/config.toml"
 
@@ -52,8 +52,8 @@ HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/bootstrap
     --checkout-dir "$CACHE_DIR" \
     --uninstall
 
-if [ -e "${TEST_HOME}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after uninstall" >&2
+if [ -e "${TEST_HOME}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after uninstall" >&2
     exit 1
 fi
 

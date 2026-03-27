@@ -32,9 +32,9 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
     echo "Codex install should not modify AGENTS.md" >&2
     exit 1
 fi
-test -d "${SKILLS_ROOT}/brainstorming"
+test -d "${SKILLS_ROOT}/writing-specs"
 test -d "${SKILLS_ROOT}/code-review"
-grep -qx 'double-sdd' "${SKILLS_ROOT}/brainstorming/.double-sdd-owner"
+grep -qx 'double-sdd' "${SKILLS_ROOT}/writing-specs/.double-sdd-owner"
 test -f "${AGENTS_ROOT}/implementer.toml"
 test -f "${AGENTS_ROOT}/spec-code-reviewer.toml"
 test -f "${AGENTS_ROOT}/plan-document-reviewer.toml"
@@ -51,8 +51,8 @@ grep -q '^config_file = "\./agents/implementer.toml"$' "${CODEX_HOME_DIR}/config
 HOME="$TEST_HOME" python3 "${REPO_ROOT}/scripts/codex_installer.py" uninstall-global \
     --codex-home "${CODEX_HOME_DIR}"
 
-if [ -e "${SKILLS_ROOT}/brainstorming" ]; then
-    echo "brainstorming skill still exists after uninstall" >&2
+if [ -e "${SKILLS_ROOT}/writing-specs" ]; then
+    echo "writing-specs skill still exists after uninstall" >&2
     exit 1
 fi
 

@@ -33,9 +33,9 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     echo "Codex install should not modify AGENTS.md" >&2
     exit 1
 fi
-test -d "${PROJECT_ROOT}/.agents/skills/brainstorming"
+test -d "${PROJECT_ROOT}/.agents/skills/writing-specs"
 test -d "${PROJECT_ROOT}/.agents/skills/code-review"
-grep -qx 'double-sdd' "${PROJECT_ROOT}/.agents/skills/brainstorming/.double-sdd-owner"
+grep -qx 'double-sdd' "${PROJECT_ROOT}/.agents/skills/writing-specs/.double-sdd-owner"
 test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/plan-document-reviewer.toml"
@@ -55,8 +55,8 @@ grep -q ".double-sdd/" "${PROJECT_ROOT}/.git/info/exclude"
 generated_uninstall_output="$("${ARTIFACT_ROOT}/uninstall" 2>&1)"
 printf '%s\n' "$generated_uninstall_output" | grep -q "Removing project-local double-SDD helpers"
 
-if [ -e "${PROJECT_ROOT}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after generated uninstall" >&2
+if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after generated uninstall" >&2
     exit 1
 fi
 
@@ -95,8 +95,8 @@ python3 "${REPO_ROOT}/scripts/codex_installer.py" install-project \
 python3 "${REPO_ROOT}/scripts/codex_installer.py" uninstall-project \
     --project-root "${PROJECT_ROOT}"
 
-if [ -e "${PROJECT_ROOT}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after uninstall" >&2
+if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after uninstall" >&2
     exit 1
 fi
 

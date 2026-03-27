@@ -27,7 +27,7 @@ git -C "$SOURCE_REPO" commit -m "snapshot" >/dev/null 2>&1
     --checkout-dir "$CACHE_DIR"
 
 test -d "${CACHE_DIR}/.git"
-test -d "${PROJECT_ROOT}/.agents/skills/brainstorming"
+test -d "${PROJECT_ROOT}/.agents/skills/writing-specs"
 test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/plan-document-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/config.toml"
@@ -37,14 +37,14 @@ if [ -e "${PROJECT_ROOT}/AGENTS.md" ]; then
     exit 1
 fi
 grep -q '^\[\[skills\.config\]\]$' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
-grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/brainstorming/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
+grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/writing-specs/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 grep -q '^compact_prompt = """$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${PROJECT_ROOT}/.codex/config.toml"
 
 "${PROJECT_ROOT}/.double-sdd/uninstall"
 
-if [ -e "${PROJECT_ROOT}/.agents/skills/brainstorming" ]; then
-    echo "brainstorming skill still exists after generated uninstall" >&2
+if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
+    echo "writing-specs skill still exists after generated uninstall" >&2
     exit 1
 fi
 

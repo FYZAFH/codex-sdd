@@ -17,12 +17,12 @@ Execute plan by dispatching a fresh subagent per task, then dispatch `spec-code-
 
 This skill requires two artifacts before starting:
 
-1. **Spec** — a design document produced by the `brainstorming` skill, saved to `docs/double-sdd/specs/YYYY-MM-DD-<topic>-design.md`. If you don't have a spec, invoke `brainstorming` first.
+1. **Spec** — a design document produced by the `writing-specs` skill, saved to `docs/double-sdd/specs/YYYY-MM-DD-<topic>-design.md`. If you don't have a spec, invoke `writing-specs` first.
 2. **Plan** — an implementation plan produced by the `writing-plans` skill, saved to `docs/double-sdd/plans/YYYY-MM-DD-<feature-name>.md`. If you have a spec but no plan, invoke `writing-plans` first.
 
 **IMPORTANT:** Do NOT assume these artifacts exist based on the topic being discussed or files you find by searching. A spec/plan only counts as "existing" if the user has **explicitly pointed you to it** (e.g., by providing the path directly). If the user has not explicitly indicated these files, treat them as missing and invoke the corresponding skill.
 
-- No spec → invoke `brainstorming`, stop here
+- No spec → invoke `writing-specs`, stop here
 - Spec but no plan → invoke `writing-plans`, stop here
 - Both exist → proceed with this skill
 
