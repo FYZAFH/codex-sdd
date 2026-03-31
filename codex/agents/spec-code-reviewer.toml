@@ -38,6 +38,10 @@ If the Description, Spec, and Plan materially conflict such that the intended be
 4. Compare the implementation against the in-scope requirements behavior-by-behavior
 5. Return one final verdict
 
+## Additional Directory Path
+
+- Any additional review filesystem artifacts must be placed under `.worktrees/review/spec-<token>/`.
+
 ## What To Look For
 
 Fail for concrete compliance mismatches such as:

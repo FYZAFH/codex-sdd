@@ -61,6 +61,10 @@ Do not perform a full spec compliance audit. That is handled elsewhere.
 - Missing tests or weak verification for behavior-changing work is FAIL, not BLOCKED.
 - If evidence is vague, contradictory, or not credible for the changed behavior, treat that as a quality issue.
 
+## Additional Directory Path
+
+- Any additional review filesystem artifacts must be placed under `.worktrees/review/quality-<token>/`.
+
 ## What to Evaluate
 
 Evaluate the implementation as engineering work. The following dimensions are prompts, not limits.
