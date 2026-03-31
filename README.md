@@ -10,6 +10,17 @@ This repository is Codex-only. It installs native Codex assets into:
 - project scope: `.agents/skills/`, `.codex/config.toml`, `.codex/agents/`
 - user scope: `~/.agents/skills/`, `~/.codex/config.toml`, `~/.codex/agents/`
 
+## Workflow
+
+```text
+writing-specs -> writing-plans -> subagent-driven-development -> finishing-a-development-branch
+```
+
+- `writing-specs` clarifies requirements and writes the approved design spec
+- `writing-plans` turns the spec into an execution plan
+- `subagent-driven-development` runs one implementer task at a time, then parallel `spec-code-reviewer` + `quality-code-reviewer` passes for the same slice
+- `finishing-a-development-branch` handles final verification and branch wrap-up
+
 ## Install
 
 Requirements:
@@ -59,11 +70,15 @@ codex
 
 ## Source Layout
 
-- `codex/config.toml` — orchestrator instructions and registered subagents
-- `codex/agents/*.toml` — Codex custom subagents
-- `codex/skills/*/SKILL.md` — Codex-native skills
-- `scripts/` — install, uninstall, bootstrap, and render helpers
-- `tests/shared/` — Codex install/render validation
+- `codex/config.toml` - orchestrator instructions and registered subagents
+- `codex/agents/implementer.toml` - one-task TDD implementer
+- `codex/agents/spec-code-reviewer.toml` - slice-level spec compliance reviewer
+- `codex/agents/quality-code-reviewer.toml` - slice-level engineering quality reviewer
+- `codex/agents/spec-document-reviewer.toml` - spec document reviewer
+- `codex/agents/plan-document-reviewer.toml` - plan document reviewer
+- `codex/skills/*/SKILL.md` - Codex-native workflow skills
+- `scripts/` - install, uninstall, bootstrap, and render helpers
+- `tests/shared/` - install/render validation
 
 ## Validation
 
@@ -76,8 +91,9 @@ bash tests/shared/test-codex-project-install.sh
 
 ## Notes
 
-- Installed subagents have their skills disabled explicitly through `[[skills.config]]` entries.
+- Codex orchestration lives in `.codex/config.toml`, not `AGENTS.md`
+- Installed subagents explicitly disable inherited skills through `[[skills.config]]`
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE).

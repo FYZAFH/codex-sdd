@@ -99,8 +99,8 @@ After writing the spec document:
    - `fork_context: false`
 3. Provide the spec file path and only the minimal review context needed.
 4. Never pass your session history or chain-of-thought.
-5. If the reviewer finds fixable issues and you already have enough context, fix them and re-dispatch.
-6. If reviewer feedback exposes a new unresolved product question or compatibility requirement, stop and ask the user before continuing.
+5. If the reviewer returns required clarifications that you can resolve with the current context, update the spec and re-dispatch.
+6. If the reviewer returns a required clarification that depends on a new unresolved product question or compatibility requirement, stop and ask the user before continuing.
 7. If the loop exceeds 5 iterations, surface it to the user.
 
 ## User Review Gate

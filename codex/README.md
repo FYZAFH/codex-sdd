@@ -14,8 +14,8 @@ live in `.codex/agents/*.toml`.
 
 - `config.toml` — controller/orchestrator instructions plus registered subagents
 - `agents/implementer.toml` — TDD implementation subagent
-- `agents/spec-code-reviewer.toml` — spec compliance reviewer
-- `agents/quality-code-reviewer.toml` — code quality reviewer
+- `agents/spec-code-reviewer.toml` — spec compliance reviewer for the current implementation slice
+- `agents/quality-code-reviewer.toml` — engineering quality reviewer for the current implementation slice
 - `agents/spec-document-reviewer.toml` — spec document reviewer
 - `agents/plan-document-reviewer.toml` — plan document reviewer
 - `skills/` — Codex-native skills installed into `.agents/skills/`

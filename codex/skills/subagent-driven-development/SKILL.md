@@ -5,7 +5,7 @@ description: Use before implementing anything - dispatches fresh subagent per ta
 
 # Subagent-Driven Development
 
-Execute plan by dispatching a fresh subagent per task, then dispatch `spec-code-reviewer` and `quality-code-reviewer` in parallel after each implementation pass. `spec-code-reviewer` is the gate, but only after you have verified that its reported mismatch is real and should be addressed in the current pass. For how reviews are dispatched, interpreted, triaged, validated, gated, and pushed back on, follow the `code-review` skill throughout the review cycle.
+Execute plan by dispatching a fresh subagent per task, then dispatch `spec-code-reviewer` and `quality-code-reviewer` in parallel after each implementation pass. `spec-code-reviewer` is the gate, but only after you have verified that its reported compliance mismatch is real and should be addressed in the current pass. For how reviews are dispatched, interpreted, triaged, validated, gated, and pushed back on, follow the `code-review` skill throughout the review cycle.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
@@ -66,11 +66,11 @@ Three custom subagents, dispatched by name via `spawn_agent`:
 **`implementer`** — Implements a single task using TDD.
 Dispatch with: task description, spec/plan paths, working directory, context about dependencies.
 
-**`spec-code-reviewer`** — Verifies implementation matches spec. This reviewer is the gate for the entire review pass.
-Dispatch with: spec/plan paths, git range (base SHA..head SHA).
+**`spec-code-reviewer`** — Verifies whether the current implementation slice matches the requested spec-defined behavior and scope. This reviewer is the gate for the entire review pass.
+Dispatch with: description, spec/plan paths, git range (Base..Head).
 
-**`quality-code-reviewer`** — Reviews code quality and production readiness.
-Dispatch with: spec/plan paths, git range (base SHA..head SHA).
+**`quality-code-reviewer`** — Reviews engineering quality for the current implementation slice.
+Dispatch with: description, spec/plan paths, git range (Base..Head).
 
 For every subagent dispatch in this skill:
 - provide complete task context up front
@@ -100,7 +100,20 @@ spawn_agent:
   agent_type: spec-code-reviewer
   fork_context: false
   message: |
-    Review Task 3: user authentication endpoint
+    Description: Task 3: user authentication endpoint
+
+    Spec: docs/double-sdd/specs/auth-spec.md
+    Plan: docs/double-sdd/plans/auth-plan.md
+    Base: abc1234
+    Head: def5678
+```
+
+```
+spawn_agent:
+  agent_type: quality-code-reviewer
+  fork_context: false
+  message: |
+    Description: Task 3: user authentication endpoint
 
     Spec: docs/double-sdd/specs/auth-spec.md
     Plan: docs/double-sdd/plans/auth-plan.md
@@ -127,10 +140,10 @@ spawn_agent:
 
 ## Evaluating Reviewer Feedback
 
-Subagent reviewers catch real issues, but they also overreach, over-classify, and miss context. **Verify before implementing. Technical correctness over reviewer confidence.**
+Subagent reviewers catch real issues, but they also overreach and miss context. **Verify before implementing. Technical correctness over reviewer confidence.**
 
 - Review output is input to evaluate, not an order to follow.
-- If a review item is real, still decide whether it should be fixed now, deferred, or skipped.
+- If a reported compliance mismatch, required fix, or other review finding is real, still decide whether it should be fixed now, deferred, or skipped.
 - For the full review-handling rules, read and follow the `code-review` skill.
 - Keep the workflow moving until the full plan is complete unless you hit a real unresolved issue you cannot solve inside the current plan/spec boundary.
 
@@ -154,7 +167,7 @@ Subagent reviewers catch real issues, but they also overreach, over-classify, an
 
 **If subagent asks questions:** Answer clearly and completely. Don't rush them.
 
-**If reviewer finds issues:** Implementer fixes → reviewer reviews again → repeat until approved.
+**If reviewer returns `FAIL`:** verify the reported compliance mismatches or required fixes, send confirmed fixes back through the implementer, then re-review until approved.
 
 **If subagent fails task:** Dispatch fix subagent with specific instructions. **Don't fix manually** (context pollution).
 
