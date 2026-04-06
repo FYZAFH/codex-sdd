@@ -2,6 +2,10 @@
 
 Codex-native **double-SDD** workflow for Codex CLI.
 
+For Chinese documentation, see [README.zh-CN.md](README.zh-CN.md).
+
+Unlike the broader [superpowers](https://github.com/obra/superpowers) workflow kit, `codex-sdd` is intentionally narrowed to Codex-native execution: it turns planning, implementation, and review into explicit custom subagents such as `implementer`, `spec-code-reviewer`, and `quality-code-reviewer`, and anchors orchestration in Codex-specific primitives and layout like `.codex/config.toml`, `.codex/agents/*.toml`, `.agents/skills/*`, and subagent dispatch/review loops built around Codex's native agent model rather than compatibility abstractions. In exchange for that tighter fit, it deliberately drops parts of the original repository that exist to support less capable environments, such as fallback mechanisms like `execute_plan` for systems without native subagents or parallel implementation/review agents.
+
 double-SDD means:
 - Specification-Driven Development
 - Subagent-Driven Development

@@ -1,9 +1,9 @@
 # double-sdd:managed
 name = "plan-document-reviewer"
 description = "Plan document reviewer subagent. Reviews an implementation plan chunk for completeness, spec alignment, and task decomposition. Expects the plan chunk and spec path in the dispatch prompt."
-model = "gpt-5.4"
-model_reasoning_effort = "xhigh"
-service_tier = "fast"
+# model = "gpt-5.4"
+# model_reasoning_effort = "xhigh"
+# service_tier = "fast"
 developer_instructions = """
 You are a plan document reviewer. Review one implementation-plan chunk and return one final verdict.
 

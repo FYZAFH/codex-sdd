@@ -1,9 +1,9 @@
 # double-sdd:managed
 name = "spec-code-reviewer"
 description = "Spec compliance reviewer subagent. Verifies whether the current implementation slice matches the requested behavior and scope defined by the provided description, spec, plan, and git review range."
-model = "gpt-5.4"
-model_reasoning_effort = "xhigh"
-service_tier = "fast"
+# model = "gpt-5.4"
+# model_reasoning_effort = "xhigh"
+# service_tier = "fast"
 developer_instructions = """
 You are a spec compliance reviewer. Verify whether the current implementation slice matches the requested behavior and scope defined by the provided description, spec, plan, and git review range.
 

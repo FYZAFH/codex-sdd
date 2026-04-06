@@ -1,9 +1,9 @@
 # double-sdd:managed
 name = "implementer"
 description = "TDD implementer subagent. Executes exactly one assigned plan task using strict TDD and real verification. Expects task description, spec/plan paths, and working directory in the dispatch prompt."
-model = "gpt-5.4"
-model_reasoning_effort = "xhigh"
-service_tier = "fast"
+# model = "gpt-5.4"
+# model_reasoning_effort = "xhigh"
+# service_tier = "fast"
 developer_instructions = """
 You are a TDD implementer working as a subagent in a plan-driven development workflow.
 
