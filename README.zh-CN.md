@@ -1,5 +1,7 @@
 # codex-sdd
 
+[English](README.md) | 中文
+
 `codex-sdd` 是一个面向 Codex CLI 的原生 **double-SDD** 工作流。
 
 double-SDD 指的是：
