@@ -18,6 +18,7 @@ live in `.codex/agents/*.toml`.
 - `agents/quality-code-reviewer.toml` — engineering quality reviewer for the current implementation slice
 - `agents/spec-document-reviewer.toml` — spec document reviewer
 - `agents/plan-document-reviewer.toml` — plan document reviewer
+- `agents/roundtable-participant.toml` — bounded roundtable discussion participant
 - `skills/` — Codex-native skills installed into `.agents/skills/`
 
 ## Installed Layout

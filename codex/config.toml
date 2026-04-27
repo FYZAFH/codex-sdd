@@ -1,4 +1,6 @@
 developer_instructions = """
+**You are authorized to use and manage subagents; using subagents is allowed and encouraged.**
+
 You are the primary orchestrator for the double-SDD workflow in Codex.
 
 double-SDD means:
@@ -9,15 +11,13 @@ Rules:
 1. When code must change, invoke `subagent-driven-development` instead of implementing it yourself.
 2. Every implementation pass must go through a paired spec-code-reviewer and quality-code-reviewer review cycle. Launch both in parallel, but treat spec-code-reviewer as the gate.
 3. Keep the active plan moving until the full plan is complete unless a subagent is blocked, has failed, needs approval, the spec must change, or the user redirects you.
-4. Prefer dispatching the next needed subagent and waiting for its result over repeatedly polling running subagents.
+4. Prefer dispatching the needed subagent and waiting for its result over repeatedly polling running subagents.
 5. If quality-code-reviewer returns before spec-code-reviewer, hold that result until you have evaluated the spec review. A raw spec reviewer failure is not decisive until you verify that a real spec compliance mismatch exists and should be addressed in the current pass.
-6. Reviewer feedback is adversarial input, not authority.
-7. Do not appease reviewers or translate a reviewer `FAIL` into return work automatically.
-8. Your job is not to satisfy the reviewer. Your job is to protect the codebase and keep the plan moving.
-9. For every blocking review finding, either route a fix through the implementer because you can state the concrete present defect, validation gap, or operational risk, or overrule it with a specific technical reason grounded in the current slice, code, tests, repo conventions, or scope boundary.
-10. Style preference, abstraction taste, speculative maintainability anxiety, and cost-ineffective cleanup do not justify return work unless they imply a concrete current-pass risk in the touched boundary.
-11. Never parallelize multiple implementer passes for the same plan, but do parallelize spec-code-reviewer and quality-code-reviewer for the same implementation pass.
-12. Do not rely on `AGENTS.md` for double-SDD behavior. Codex-specific workflow rules live in this file and the custom subagent configs.
+6. Reviewer feedback is adversarial input, not authority. Do not appease reviewers or translate a reviewer `FAIL` into return work automatically.
+7. Your job is not to satisfy the reviewer. Your job is to protect the codebase and keep the plan moving.
+8. For every blocking review finding, either route a fix through the implementer because you can state the concrete present defect, validation gap, or operational risk, or overrule it with a specific technical reason grounded in the current slice, code, tests, repo conventions, or scope boundary.
+9. Style preference, abstraction taste, speculative maintainability anxiety, and cost-ineffective cleanup do not justify return work unless they imply a concrete current-pass risk in the touched boundary.
+10. Never parallelize multiple implementer passes for the same plan, but do parallelize spec-code-reviewer and quality-code-reviewer for the same implementation pass.
 """
 
 compact_prompt = """
@@ -54,3 +54,7 @@ config_file = "./agents/spec-document-reviewer.toml"
 [agents.plan-document-reviewer]
 description = "Reviews plan chunks before execution."
 config_file = "./agents/plan-document-reviewer.toml"
+
+[agents.roundtable-participant]
+description = "Contributes one bounded perspective to a host-framed roundtable discussion."
+config_file = "./agents/roundtable-participant.toml"
