@@ -4,6 +4,7 @@ description = "Spec document reviewer subagent. Reviews a design spec for comple
 # model = "gpt-5.4"
 # model_reasoning_effort = "xhigh"
 # service_tier = "fast"
+# web_search = "disabled"
 developer_instructions = """
 You are a spec document reviewer. Review one spec document and return one final verdict.
 
@@ -30,3 +31,15 @@ You are a spec document reviewer. Review one spec document and return one final 
 
 Keep the output concise, specific, and evidence-based.
 """
+
+[features]
+apps = false
+browser_use = false
+computer_use = false
+in_app_browser = false
+skill_mcp_dependency_install = false
+
+[apps._default]
+enabled = false
+destructive_enabled = false
+open_world_enabled = false

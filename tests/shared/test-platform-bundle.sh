@@ -21,6 +21,7 @@ test -f "${TMP_DIR}/codex/.codex/agents/spec-code-reviewer.toml"
 test -f "${TMP_DIR}/codex/.codex/agents/quality-code-reviewer.toml"
 test -f "${TMP_DIR}/codex/.codex/agents/spec-document-reviewer.toml"
 test -f "${TMP_DIR}/codex/.codex/agents/plan-document-reviewer.toml"
+test -f "${TMP_DIR}/codex/.codex/agents/roundtable-participant.toml"
 test -f "${TMP_DIR}/codex/.codex/config.toml"
 
 grep -q "update_plan" "${TMP_DIR}/codex/.agents/skills/subagent-driven-development/SKILL.md"
@@ -50,6 +51,7 @@ grep -q '^name = "spec-code-reviewer"$' "${TMP_DIR}/codex/.codex/agents/spec-cod
 grep -q '^name = "quality-code-reviewer"$' "${TMP_DIR}/codex/.codex/agents/quality-code-reviewer.toml"
 grep -q '^name = "spec-document-reviewer"$' "${TMP_DIR}/codex/.codex/agents/spec-document-reviewer.toml"
 grep -q '^name = "plan-document-reviewer"$' "${TMP_DIR}/codex/.codex/agents/plan-document-reviewer.toml"
+grep -q '^name = "roundtable-participant"$' "${TMP_DIR}/codex/.codex/agents/roundtable-participant.toml"
 grep -q '^developer_instructions = ' "${TMP_DIR}/codex/.codex/agents/implementer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${TMP_DIR}/codex/.codex/agents/implementer.toml"
 grep -Fq "path = \"${TMP_DIR}/codex/.agents/skills/writing-specs/SKILL.md\"" "${TMP_DIR}/codex/.codex/agents/implementer.toml"
@@ -60,6 +62,8 @@ grep -q '^\[agents\.implementer\]$' "${TMP_DIR}/codex/.codex/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${TMP_DIR}/codex/.codex/config.toml"
 grep -q '^\[agents\.spec-document-reviewer\]$' "${TMP_DIR}/codex/.codex/config.toml"
 grep -q '^config_file = "\./agents/spec-document-reviewer.toml"$' "${TMP_DIR}/codex/.codex/config.toml"
+grep -q '^\[agents\.roundtable-participant\]$' "${TMP_DIR}/codex/.codex/config.toml"
+grep -q '^config_file = "\./agents/roundtable-participant.toml"$' "${TMP_DIR}/codex/.codex/config.toml"
 
 for pattern in \
     "bootstrap.md" \

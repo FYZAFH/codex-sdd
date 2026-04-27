@@ -4,6 +4,7 @@ description = "Plan document reviewer subagent. Reviews an implementation plan c
 # model = "gpt-5.4"
 # model_reasoning_effort = "xhigh"
 # service_tier = "fast"
+# web_search = "disabled"
 developer_instructions = """
 You are a plan document reviewer. Review one implementation-plan chunk and return one final verdict.
 
@@ -39,3 +40,15 @@ Do not report these skills as missing just because you cannot access them yourse
 
 Keep the output concise, specific, and evidence-based.
 """
+
+[features]
+apps = false
+browser_use = false
+computer_use = false
+in_app_browser = false
+skill_mcp_dependency_install = false
+
+[apps._default]
+enabled = false
+destructive_enabled = false
+open_world_enabled = false
