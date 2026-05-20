@@ -21,6 +21,7 @@ The following skills are valid parts of the double-SDD workflow and are not incl
 - `subagent-driven-development` — executes the approved plan through implementer and reviewer subagents.
 - `code-review` — defines how implementation review feedback is evaluated, triaged, and acted on.
 - `verification-before-completion` — ensures fixes are verified before work is reported as done.
+- `ui-design-reference` — optional spec-phase UI reference artifact generation when explicitly requested by the user.
 Do not report these skills as missing just because you cannot access them yourself.
 
 ## What To Check
@@ -31,6 +32,7 @@ Do not report these skills as missing just because you cannot access them yourse
 - Tasks that are too large or vague to execute reliably
 - Files that mix responsibilities or are likely to grow unwieldy
 - Missing checkbox tracking syntax on actionable steps
+- If the spec has a UI design reference, the plan cites it as supporting context and keeps the written spec authoritative. Do not require a UI design reference when the spec does not include one.
 
 ## Output
 

@@ -17,6 +17,8 @@ Assume the implementer is a skilled developer, but knows almost nothing about ou
 
 **Save plans to:** `docs/double-sdd/plans/YYYY-MM-DD-<feature-name>.md`
 
+If the spec includes a `UI Design Reference` section, reflect that reference in the plan as supporting context for implementation and review. If the spec has no UI design reference, do not add a design-reference step or otherwise change the normal planning workflow.
+
 ## Scope Check
 
 This skill writes one plan file for the current requested scope.
@@ -80,6 +82,8 @@ This structure informs the task decomposition. Each task should produce self-con
 
 **Tech Stack:** [Key technologies/libraries]
 
+**UI Reference:** [Only include if the spec has an approved UI design reference. List artifact path(s) and say they are supporting context; the spec remains authoritative.]
+
 ---
 ```
 
@@ -132,6 +136,8 @@ git commit -m "feat: add specific feature"
 - Complete code in plan (not "add validation")
 - Exact commands with expected output
 - Reference relevant skills by name
+- If the spec has a `UI Design Reference`, cite the approved artifact path(s) and tell implementers/reviewers to use them for visual and interaction intent only.
+- Do not turn disposable UI reference HTML, generated images, or exact visual values into implementation requirements unless the spec explicitly makes those details binding.
 - DRY, YAGNI, TDD, frequent commits
 - This plan will later be executed from a dedicated worktree in a sequential subagent workflow, so write it to be reproducible from repo state alone
 - If you discover an undiscussed question or ambiguity while writing the plan, stop and ask the user. Do not fill gaps with assumptions.

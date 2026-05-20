@@ -20,6 +20,8 @@ This skill requires two artifacts before starting:
 1. **Spec** — a design document produced by the `writing-specs` skill, saved to `docs/double-sdd/specs/YYYY-MM-DD-<topic>-design.md`. If you don't have a spec, invoke `writing-specs` first.
 2. **Plan** — an implementation plan produced by the `writing-plans` skill, saved to `docs/double-sdd/plans/YYYY-MM-DD-<feature-name>.md`. If you have a spec but no plan, invoke `writing-plans` first.
 
+If the spec or plan references approved UI design artifacts, those artifacts are supporting context only. Keep the spec and plan authoritative, but make sure referenced artifact paths are available in the worktree before dispatching tasks that rely on them.
+
 **IMPORTANT:** Do NOT assume these artifacts exist based on the topic being discussed or files you find by searching. A spec/plan only counts as "existing" if the user has **explicitly pointed you to it** (e.g., by providing the path directly). If the user has not explicitly indicated these files, treat them as missing and invoke the corresponding skill.
 
 - No spec → invoke `writing-specs`, stop here
@@ -74,6 +76,7 @@ Dispatch with: description, spec/plan paths, git range (Base..Head).
 
 For every subagent dispatch in this skill:
 - provide complete task context up front
+- include approved UI design reference artifact paths when the spec/plan cites them, labeled as visual and interaction context only
 - wait for the decisive result instead of repeatedly polling
 - if more context is needed, answer once clearly and re-dispatch a fresh pass
 - follow the `code-review` skill before dispatching reviews and when deciding whether spec feedback actually gates the pass

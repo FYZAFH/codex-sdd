@@ -1,6 +1,6 @@
 ---
 name: writing-specs
-description: "You MUST use this before any implementation work. Clarifies requirements, explores approaches, validates the design, and writes the approved spec before planning."
+description: "You MUST use this before any implementation work. Clarifies requirements, optionally incorporates explicitly requested UI design references, validates the design, and writes the approved spec before planning."
 ---
 
 # Writing Specs
@@ -38,6 +38,8 @@ Surface these questions early so you can move into each next step with confidenc
 - Ask one question at a time.
 - If the request is too large for one spec, stop and help the user decompose it before continuing.
 - Explicitly determine the compatibility posture before locking the design.
+- Do not invoke `ui-design-reference` unless the user directly named that skill or explicitly asked to use the UI design reference skill.
+- If `ui-design-reference` is not explicitly requested, do not add a design-artifact step or change the normal spec workflow.
 - The only terminal state of `writing-specs` is invoking `writing-plans`.
 
 ## Workflow
@@ -46,14 +48,15 @@ Surface these questions early so you can move into each next step with confidenc
 2. Assess scope early. If the request spans multiple independent subsystems or deliverables, stop and decompose it with the user first.
 3. Ask clarifying questions one at a time until purpose, constraints, success criteria, edge cases, and compatibility expectations are explicit.
 4. Propose 2-3 approaches with trade-offs and recommend one.
-5. Present the design in sections scaled to the complexity of the work and get user approval as you go.
-6. If approval, spec writing, or review feedback exposes a new unresolved question, stop and return to the clarification loop.
-7. Write the approved spec to `docs/double-sdd/specs/YYYY-MM-DD-<topic>-design.md`
-8. Run the `spec-document-reviewer` loop until the spec is approved or you hit 5 iterations.
-9. Ask the user to review the written spec.
-10. If the user requests changes, update the spec and re-run review as needed.
-11. After both the spec review loop and the user review pass, commit the approved spec document.
-12. Invoke `writing-plans`.
+5. If the user explicitly requested `ui-design-reference` or the UI design reference skill, invoke `ui-design-reference` now, produce the reference artifact, and get user approval for it before locking the design.
+6. Present the design in sections scaled to the complexity of the work and get user approval as you go.
+7. If approval, spec writing, or review feedback exposes a new unresolved question, stop and return to the clarification loop.
+8. Write the approved spec to `docs/double-sdd/specs/YYYY-MM-DD-<topic>-design.md`
+9. Run the `spec-document-reviewer` loop until the spec is approved or you hit 5 iterations.
+10. Ask the user to review the written spec.
+11. If the user requests changes, update the spec and re-run review as needed.
+12. After both the spec review loop and the user review pass, commit the approved spec document and any approved UI design reference artifacts used by the spec.
+13. Invoke `writing-plans`.
 
 ## Understanding the Request
 
@@ -76,6 +79,7 @@ Compatibility posture must cover:
 - Design smaller units with clear responsibilities and interfaces.
 - Follow existing codebase patterns unless the work requires targeted structural improvement.
 - Do not introduce unrelated refactors.
+- If an approved UI design reference exists, treat it as visual and interaction context. Distill its approved decisions into the written design; do not make disposable HTML, generated images, exact CSS values, or asset internals the implementation contract unless the user explicitly requires that.
 
 ## Writing the Spec
 
@@ -86,6 +90,8 @@ Compatibility posture must cover:
   - `Protected surfaces: [...]`
   - `Allowed breakage: [...]`
   - `Migration strategy: none | compatibility layer | migration script | deprecation window | other`
+- If `ui-design-reference` was used, include a `UI Design Reference` section with artifact path(s), represented screens/states/flows, approved design decisions, non-binding reference details, and any accessibility, responsive, content, or interaction requirements derived from the artifact.
+- If no UI design reference was explicitly requested and approved, omit the `UI Design Reference` section.
 - Do not hide unresolved questions behind `TBD`, `later`, or vague wording.
 - If writing the spec exposes a new unresolved product decision, constraint, edge case, or compatibility question, stop and ask the user before continuing.
 
@@ -115,7 +121,7 @@ Wait for the user's response. If they request changes, update the spec and re-ru
 
 ## Commit Gate
 
-After both the spec review loop and the user review pass, commit the approved spec document to git.
+After both the spec review loop and the user review pass, commit the approved spec document and any approved UI design reference artifacts used by that spec to git.
 
 ## Completion
 

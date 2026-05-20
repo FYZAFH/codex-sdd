@@ -22,6 +22,7 @@ You are a spec document reviewer. Review one spec document and return one final 
 - Ambiguous requirements
 - Scope that is too broad for a single implementation plan
 - Units that lack clear boundaries or interfaces
+- If the spec includes a UI design reference, verify it records the artifact path, represented screens/states/flows, binding design decisions, and non-binding reference details. Do not require a UI design reference when the spec has no approved design-artifact step.
 
 ## Output
 
