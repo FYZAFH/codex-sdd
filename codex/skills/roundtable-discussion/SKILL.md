@@ -7,9 +7,9 @@ description: Facilitate real subagent roundtable meetings for uncertain futures,
 
 ## Overview
 
-Run a bounded roundtable meeting with real subagent participants, then synthesize their disagreement into decisions, risks, unresolved questions, and spec-writing inputs.
+Run a bounded but resumable roundtable meeting with real subagent participants, then synthesize their disagreement into decisions, risks, unresolved questions, and spec-writing inputs.
 
-The main assistant is the host because it has the most complete project and conversation context. Participants contribute focused perspectives; the host owns framing, dispatch, synthesis, and the handoff back into the active workflow.
+The main assistant is the host because it has the most complete project and conversation context. Participants contribute focused perspectives; the host owns framing, dispatch, synthesis, meeting state, continuation rounds, closure, and the handoff back into the active workflow.
 
 ## Hard Prerequisites
 
@@ -37,6 +37,8 @@ The main assistant acts as host and must:
 - Separate consensus, disagreement, assumptions, evidence gaps, and recommendations.
 - Convert unresolved material questions into blockers for `writing-specs`.
 - Avoid letting participant opinions override user requirements or project constraints.
+- Maintain the roundtable as open after the first synthesis unless closure conditions are met.
+- On user follow-up, objections, or new evidence, continue the same meeting with the relevant previous roles instead of starting from scratch.
 
 ## When To Run
 
@@ -121,6 +123,46 @@ Use a prompt shaped like:
 
 If a participant blocks on missing context, the host may provide the missing facts once. Do not let the meeting become an open-ended subagent conversation.
 
+## Meeting Lifecycle
+
+A roundtable is a meeting state, not a single response. After the first synthesis, keep the meeting open in the host's context unless one of the closure conditions below is met.
+
+Track the open meeting state:
+
+- original decision frame
+- participant roles used
+- prior participant positions
+- prior consensus, disagreement, crux, recommendation, and confidence
+- unresolved questions and evidence gaps
+- user follow-up, objections, corrections, or new constraints
+- roles that should continue in the next round and roles that can be dropped
+
+When the user responds with additional context, objections, disagreement, revised requirements, or asks the meeting to keep discussing:
+
+1. Treat it as a continuation of the same roundtable unless the user clearly starts a different decision.
+2. Identify which parts of the previous synthesis are challenged or newly relevant.
+3. Reuse only the useful subset of previous participant roles, typically 2-4 roles.
+4. Add a new role only when the user's follow-up introduces a materially new lens.
+5. Provide continuing participants with the original decision frame, prior synthesis, their previous position when available, and the user's new input.
+6. Ask participants to respond to the delta, not to repeat the entire first-round analysis.
+7. Produce an updated synthesis that clearly distinguishes unchanged conclusions from revised conclusions.
+
+If the subagent system supports continuing the same participant conversations, continue those conversations. If it only supports fresh dispatches, re-dispatch the same participant roles with the prior roundtable state included so the meeting remains logically continuous.
+
+## Closure Protocol
+
+Do not automatically close the meeting merely because one synthesis was delivered.
+
+Close the roundtable only when:
+
+- the user explicitly asks to close, end, finalize, proceed, write the spec, or stop discussing the roundtable
+- the user accepts the recommendation and there are no material unresolved disagreements or blockers
+- the host has just produced a synthesis where the relevant participants have no remaining material disagreement, the decision crux is resolved, and the next workflow step is clear
+
+When closing, say that the roundtable is closed and summarize what will be carried into the active workflow.
+
+If closure conditions are not met, end the synthesis with the meeting status as open and make clear what kind of follow-up would continue the same meeting.
+
 ## Synthesis Protocol
 
 After participant outputs return, the host produces the roundtable result:
@@ -135,6 +177,7 @@ After participant outputs return, the host produces the roundtable result:
 - **Unresolved questions**: material questions that block spec writing or approach selection.
 - **Recommendation**: one recommended path, confidence level, and why.
 - **Spec impact**: requirements, constraints, non-goals, tests, or compatibility notes to carry into `writing-specs`.
+- **Meeting status**: `open` or `closed`, with the reason.
 
 If there is no honest consensus, preserve dissent instead of forcing agreement.
 

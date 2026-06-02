@@ -49,6 +49,8 @@ grep -q 'restrained industrial engineering-tool aesthetic' "${TMP_DIR}/codex/.ag
 grep -q 'design it as a fixed software view' "${TMP_DIR}/codex/.agents/skills/ui-design-reference/SKILL.md"
 grep -q "spawn_agent" "${TMP_DIR}/codex/.agents/skills/writing-specs/SKILL.md"
 grep -q "spawn_agent" "${TMP_DIR}/codex/.agents/skills/writing-plans/SKILL.md"
+grep -q 'Do not automatically close the meeting' "${TMP_DIR}/codex/.agents/skills/roundtable-discussion/SKILL.md"
+grep -q 'Roundtable continuity' "${TMP_DIR}/codex/.agents/skills/roundtable-discussion/agents/participant-prompts.md"
 grep -q 'verification-before-completion' "${TMP_DIR}/codex/.agents/skills/systematic-debugging/SKILL.md"
 grep -q '^# double-sdd:managed$' "${TMP_DIR}/codex/.codex/agents/implementer.toml"
 grep -q '^name = "implementer"$' "${TMP_DIR}/codex/.codex/agents/implementer.toml"

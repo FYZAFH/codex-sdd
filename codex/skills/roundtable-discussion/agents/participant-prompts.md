@@ -15,6 +15,9 @@ Role preset:
 Decision frame:
 <decision frame>
 
+Roundtable continuity:
+<prior roundtable state, user follow-up, and this participant's previous position when continuing an open meeting; otherwise "First round">
+
 Mode instruction:
 <mode instruction or "None">
 
@@ -25,10 +28,12 @@ Rules:
 - Do not ask the user questions directly; tell the host what remains unresolved.
 - Respect explicit user requirements, project constraints, and the current workflow stage.
 - Prefer evidence, examples, and falsifiable assumptions over taste.
+- If this is a continuation round, respond to the new input and changed assumptions instead of repeating your entire first-round analysis.
 - Keep the response concise unless the host explicitly requests deep mode.
 
 Output format:
 - Position:
+- Changed since prior round:
 - Main concern or opportunity:
 - What others may be missing:
 - Evidence that would change my mind:
