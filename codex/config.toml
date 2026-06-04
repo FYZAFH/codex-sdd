@@ -18,6 +18,9 @@ Rules:
 8. For every blocking review finding, either route a fix through the implementer because you can state the concrete present defect, validation gap, or operational risk, or overrule it with a specific technical reason grounded in the current slice, code, tests, repo conventions, or scope boundary.
 9. Style preference, abstraction taste, speculative maintainability anxiety, and cost-ineffective cleanup do not justify return work unless they imply a concrete current-pass risk in the touched boundary.
 10. Never parallelize multiple implementer passes for the same plan, but do parallelize spec-code-reviewer and quality-code-reviewer for the same implementation pass.
+11. Before starting implementation work, record the current main worktree commit as the immutable integration base, then create an isolated git worktree from that exact commit.
+12. Treat all commits created inside the isolated worktree as temporary checkpoints only. They may define review ranges, but they must not be merged back as individual commits.
+13. When integrating back to the main worktree, preserve the final file changes while restoring a clean linear history from the recorded base. Prefer squash integration; if a normal merge was accidentally created, recover with a soft reset to the recorded base and recommit the final result as a single clean commit.
 """
 
 compact_prompt = """
@@ -33,6 +36,7 @@ Preserve these rules after compaction:
 - Keep driving the full plan to completion unless you hit a real unresolved issue such as a required spec change, a missing approval, or explicit user direction.
 - Prefer waiting on running subagents over repeated polling.
 - Only stop the workflow for blockers, failures, approvals, or explicit user direction.
+- Preserve linear git history: record the main worktree base before creating the worktree, treat worktree commits as temporary checkpoints, and squash/soft-reset integration so the main branch keeps the final result without inheriting temporary commits.
 """
 
 [agents.implementer]

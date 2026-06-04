@@ -11,6 +11,8 @@ Guide completion of development work by presenting clear options and handling ch
 
 **Core principle:** Verify tests → Present options → Execute choice → Clean up.
 
+**Linear history rule:** Worktree commits are temporary checkpoints. Local integration must keep the final file changes while removing temporary commit history from the main branch. Use the `MAIN_BASE` recorded before the worktree was created as the integration anchor.
+
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
 ## The Process
@@ -53,7 +55,7 @@ Present exactly these 4 options:
 ```
 Implementation complete. What would you like to do?
 
-1. Merge back to <base-branch> locally
+1. Squash-integrate back to <base-branch> locally
 2. Push and create a Pull Request
 3. Keep the branch as-is (I'll handle it later)
 4. Discard this work
@@ -65,26 +67,42 @@ Which option?
 
 ### Step 4: Execute Choice
 
-#### Option 1: Merge Locally
+#### Option 1: Squash-Integrate Locally
 
 ```bash
+# Confirm the recorded base from subagent-driven-development
+test -n "$MAIN_BASE"
+
 # Switch to base branch
 git checkout <base-branch>
 
-# Pull latest
-git pull
+# The main worktree must be clean before restoring history
+git status --short
 
-# Merge feature branch
-git merge <feature-branch>
+# If HEAD is not the recorded base, stop and ask before moving the branch pointer
+test "$(git rev-parse --verify HEAD)" = "$MAIN_BASE"
 
-# Verify tests on merged result
+# Apply the completed work without preserving temporary commits
+git merge --squash <feature-branch>
+
+# Verify tests on the squashed result
 <test command>
 
-# If tests pass
-git branch -d <feature-branch>
+# If tests pass, create one permanent clean commit
+git commit -m "<final summary>"
 ```
 
 Then: Cleanup worktree (Step 5)
+
+If a normal merge was accidentally created before this skill is applied, recover the clean history only after confirming the main worktree has no unrelated local changes:
+
+```bash
+git reset --soft "$MAIN_BASE"
+<test command>
+git commit -m "<final summary>"
+```
+
+This keeps the merged file result staged while removing the temporary worktree commits from the main branch history.
 
 #### Option 2: Push and Create PR
 
@@ -147,13 +165,19 @@ If yes:
 git worktree remove <worktree-path>
 ```
 
+For Option 1 after the worktree is removed, delete the temporary feature branch with force because squash integration intentionally does not mark temporary commits as merged:
+
+```bash
+git branch -D <feature-branch>
+```
+
 **For Option 3:** Keep worktree.
 
 ## Quick Reference
 
 | Option | Merge | Push | Keep Worktree | Cleanup Branch |
 |--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
+| 1. Squash-integrate locally | ✓ | - | - | ✓ |
 | 2. Create PR | - | ✓ | ✓ | - |
 | 3. Keep as-is | - | - | ✓ | - |
 | 4. Discard | - | - | - | ✓ (force) |
@@ -181,11 +205,16 @@ git worktree remove <worktree-path>
 **Never:**
 - Proceed with failing tests
 - Merge without verifying tests on result
+- Preserve temporary worktree commits in main branch history
+- Reset the main branch to the recorded base unless the worktree is clean and the user selected local integration
+- Use plain `git merge <feature-branch>` for local integration
 - Delete work without confirmation
 - Force-push without explicit request
 
 **Always:**
 - Verify tests before offering options
+- Use the recorded `MAIN_BASE` as the local integration anchor
+- Prefer `git merge --squash <feature-branch>` for local integration
 - Present exactly 4 options
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
