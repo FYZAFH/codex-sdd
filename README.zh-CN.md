@@ -25,6 +25,12 @@ writing-specs -> writing-plans -> subagent-driven-development -> finishing-a-dev
 - `subagent-driven-development`：每次只推进一个实现任务，然后针对同一代码切片并行执行 `spec-code-reviewer` 与 `quality-code-reviewer` 审查
 - `finishing-a-development-branch`：负责最终验证以及开发分支收尾
 
+### 线性 Git 历史
+
+实现开始前，编排器会把主工作区当前提交记录为 `MAIN_BASE`，并从这个精确提交创建隔离 worktree。worktree 中产生的提交只作为任务边界和审查范围的临时检查点，不作为最终项目历史。
+
+本地集成时，工作流会把 worktree 分支的最终成果 squash 回记录的 `MAIN_BASE`。如果不小心创建了普通 merge，工作流会通过 soft reset 回 `MAIN_BASE`，再把最终文件状态重新提交为一个干净提交。这样主分支历史保持线性，同时保留全部工作成果。
+
 ## 安装
 
 前置要求：

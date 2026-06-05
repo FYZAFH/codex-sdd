@@ -25,6 +25,12 @@ writing-specs -> writing-plans -> subagent-driven-development -> finishing-a-dev
 - `subagent-driven-development` runs one implementer task at a time, then parallel `spec-code-reviewer` + `quality-code-reviewer` passes for the same slice
 - `finishing-a-development-branch` handles final verification and branch wrap-up
 
+### Linear Git History
+
+Before implementation starts, the orchestrator records the current main worktree commit as `MAIN_BASE` and creates the isolated worktree from that exact commit. Commits made inside the worktree are temporary checkpoints for task boundaries and review ranges; they are not intended to become permanent project history.
+
+When the work is integrated locally, the workflow uses squash integration from the worktree branch back onto the recorded base. If a normal merge is accidentally created, the workflow recovers by soft-resetting to `MAIN_BASE` and recommitting the final file state as one clean commit. The result is a linear main-branch history that keeps the work product without keeping temporary SDD commits.
+
 ## Install
 
 Requirements:

@@ -28,18 +28,40 @@ This skill requires two artifacts before starting:
 
 ## Setup: Isolated Workspace
 
-Before executing any tasks, create an isolated worktree:
+Before executing any tasks, create an isolated worktree from a recorded main-worktree base. This recorded base is the anchor used later to cleanly retain the final work without retaining temporary worktree commits.
 
 ```bash
 # Ensure .worktrees/ is git-ignored
-git check-ignore -q .worktrees 2>/dev/null || echo '.worktrees' >> .gitignore && git add .gitignore && git commit -m "Add .worktrees to .gitignore"
+if ! git check-ignore -q .worktrees 2>/dev/null; then
+  printf '\n.worktrees/\n' >> .gitignore
+  git add .gitignore
+  git commit -m "Add .worktrees to .gitignore"
+fi
 
-# Create worktree
-git worktree add .worktrees/$BRANCH_NAME -b $BRANCH_NAME
+# Record the current main worktree state before any implementation commits
+MAIN_BRANCH=$(git branch --show-current)
+MAIN_BASE=$(git rev-parse --verify HEAD)
+mkdir -p .worktrees
+printf 'MAIN_BRANCH=%s\nMAIN_BASE=%s\nFEATURE_BRANCH=%s\n' "$MAIN_BRANCH" "$MAIN_BASE" "$BRANCH_NAME" > ".worktrees/$BRANCH_NAME.meta"
+
+# Create worktree from the recorded base
+git worktree add .worktrees/$BRANCH_NAME -b $BRANCH_NAME $MAIN_BASE
 cd .worktrees/$BRANCH_NAME
 ```
 
 Run project setup (npm install / cargo build / pip install / go mod download) and verify tests pass before proceeding.
+
+Record `MAIN_BRANCH`, `MAIN_BASE`, the feature branch name, and the worktree path in your orchestration notes. Every later review range and final integration decision must be interpreted relative to this recorded base, not a guessed current branch state.
+
+### Temporary Commit Policy
+
+Commits made in the isolated worktree are temporary workflow checkpoints. Use them when they help define review ranges, preserve task boundaries, or recover from review loops, but do not treat them as permanent project history.
+
+- Name temporary commits clearly, for example `tmp/sdd: task 2 parser validation`.
+- Before each task, record the current worktree `HEAD` as that task's review base.
+- After a task passes implementation and review, create or update a temporary checkpoint commit if needed so reviewers can inspect `TaskBase..HEAD`.
+- Never merge the feature branch back with a normal merge that preserves these temporary commits.
+- Final integration must squash the completed work onto `MAIN_BASE`, or soft-reset a mistakenly merged result back to `MAIN_BASE` before recommitting the final file state.
 
 ## The Process
 
@@ -52,6 +74,7 @@ Run project setup (npm install / cargo build / pip install / go mod download) an
       - DONE / DONE_WITH_CONCERNS → continue to (c)
    c. Dispatch `spec-code-reviewer` and `quality-code-reviewer` in parallel for the same git range
       - Treat each review as a single review pass, not an open-ended conversation.
+      - Use the task's recorded pre-task `HEAD` as `Base` and the current temporary checkpoint as `Head`.
       - Wait for whichever review returns first instead of repeatedly polling both.
       - Before dispatching reviews, and again when review output returns, read and follow the `code-review` skill for review dispatch, triage, validation, spec gating, and reviewer pushback.
       - **5 consecutive review loops without both reviewers approving → stop loop, orchestrator assesses and decides next step**
@@ -152,6 +175,9 @@ Subagent reviewers catch real issues, but they also overreach and miss context. 
 **Never:**
 - Implement the code yourself instead of using sub-agents.
 - Start implementation on main/master branch without explicit user consent
+- Start implementation before recording the main worktree base commit
+- Preserve temporary worktree commits in the main branch history
+- Use a normal merge as the default local integration path
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
