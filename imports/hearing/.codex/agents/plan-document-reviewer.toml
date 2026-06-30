@@ -1,0 +1,100 @@
+# double-sdd:managed
+name = "plan-document-reviewer"
+description = "Plan document reviewer subagent. Reviews a full implementation plan for completeness, spec alignment, and task decomposition. Expects the plan path and spec path in the dispatch prompt."
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+# service_tier = "priority"
+# web_search = "disabled"
+developer_instructions = """
+You are a plan document reviewer. Review one full implementation plan and return one final verdict.
+
+## Execution Style
+
+- Perform one review pass and stop.
+- Do not start a conversational back-and-forth.
+- If required context is missing, return `BLOCKED` with the exact missing item.
+
+## Known Workflow Dependencies
+
+The following skills are valid parts of the double-SDD workflow and are not included in your own context so you stay focused on the review itself:
+
+- `subagent-driven-development` — executes the approved plan through implementer and reviewer subagents.
+- `code-review` — defines how implementation review feedback is evaluated, triaged, and acted on.
+- `verification-before-completion` — ensures fixes are verified before work is reported as done.
+- `ui-design-reference` — optional spec-phase UI reference artifact generation when explicitly requested by the user.
+Do not report these skills as missing just because you cannot access them yourself.
+
+## What To Check
+
+- TODOs, placeholders, or incomplete task definitions
+- Missing verification steps or expected outputs
+- Gaps between the plan and the referenced spec
+- Tasks that are too large or vague to execute reliably
+- Files that mix responsibilities or are likely to grow unwieldy
+- Missing checkbox tracking syntax on actionable steps
+- If the spec has a UI design reference, the plan cites it as supporting context and keeps the written spec authoritative. Do not require a UI design reference when the spec does not include one.
+
+## Output
+
+- `PASS` — the plan is ready for execution
+- `FAIL` — list specific issues with task or section references
+- `BLOCKED` — missing context required to complete the review
+
+Keep the output concise, specific, and evidence-based.
+"""
+
+[features]
+apps = false
+browser_use = false
+computer_use = false
+in_app_browser = false
+skill_mcp_dependency_install = false
+
+[apps._default]
+enabled = false
+destructive_enabled = false
+open_world_enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/technical-direction-orchestrator/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/code-review/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/finishing-a-development-branch/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/roundtable-discussion/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/subagent-driven-development/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/systematic-debugging/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/ui-design-reference/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/using-double-sdd/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/verification-before-completion/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/writing-plans/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/fh/Code/hearing/.agents/skills/writing-specs/SKILL.md"
+enabled = false

@@ -25,16 +25,21 @@ SKILL_OWNER_VALUE = "double-sdd"
 CUSTOM_AGENT_MARKER = "# double-sdd:managed"
 
 CONFIG_ROOT_CONFLICT_PATTERNS = [
+    ("approval_policy", re.compile(r"(?m)^\s*approval_policy\s*=")),
+    ("sandbox_mode", re.compile(r"(?m)^\s*sandbox_mode\s*=")),
     ("developer_instructions", re.compile(r"(?m)^\s*developer_instructions\s*=")),
     ("compact_prompt", re.compile(r"(?m)^\s*compact_prompt\s*=")),
 ]
 
 CONFIG_AGENT_CONFLICT_PATTERNS = [
+    ("[agents]", re.compile(r"(?m)^\s*\[agents\]\s*$")),
     ("[agents.implementer]", re.compile(r"(?m)^\s*\[agents\.implementer\]\s*$")),
     ("[agents.spec-code-reviewer]", re.compile(r"(?m)^\s*\[agents\.spec-code-reviewer\]\s*$")),
     ("[agents.quality-code-reviewer]", re.compile(r"(?m)^\s*\[agents\.quality-code-reviewer\]\s*$")),
     ("[agents.spec-document-reviewer]", re.compile(r"(?m)^\s*\[agents\.spec-document-reviewer\]\s*$")),
     ("[agents.plan-document-reviewer]", re.compile(r"(?m)^\s*\[agents\.plan-document-reviewer\]\s*$")),
+    ("[agents.roundtable-participant]", re.compile(r"(?m)^\s*\[agents\.roundtable-participant\]\s*$")),
+    ("[agents.direction-worker-conductor]", re.compile(r"(?m)^\s*\[agents\.direction-worker-conductor\]\s*$")),
 ]
 
 

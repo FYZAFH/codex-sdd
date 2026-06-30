@@ -16,7 +16,7 @@ cat > "${CODEX_HOME_DIR}/AGENTS.md" <<'EOF'
 Keep this line.
 EOF
 cat > "${CODEX_HOME_DIR}/config.toml" <<'EOF'
-approval_policy = "on-request"
+model = "gpt-test"
 
 [existing]
 answer = 42
@@ -40,8 +40,11 @@ test -f "${AGENTS_ROOT}/spec-code-reviewer.toml"
 test -f "${AGENTS_ROOT}/plan-document-reviewer.toml"
 grep -q '^# double-sdd:managed$' "${AGENTS_ROOT}/implementer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${AGENTS_ROOT}/quality-code-reviewer.toml"
+grep -Fq 'name = "skill-creator"' "${AGENTS_ROOT}/quality-code-reviewer.toml"
+grep -Fq 'name = "imagegen"' "${AGENTS_ROOT}/quality-code-reviewer.toml"
+grep -Fq 'name = "chrome:Chrome"' "${AGENTS_ROOT}/quality-code-reviewer.toml"
 grep -Fq "path = \"${TEST_HOME}/.agents/skills/code-review/SKILL.md\"" "${AGENTS_ROOT}/quality-code-reviewer.toml"
-grep -q 'approval_policy = "on-request"' "${CODEX_HOME_DIR}/config.toml"
+grep -q 'model = "gpt-test"' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^\[existing\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^answer = 42$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:codex-config-root:start$' "${CODEX_HOME_DIR}/config.toml"
@@ -67,7 +70,7 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${CODEX_HOME_DIR}/config.toml"
+grep -q 'model = "gpt-test"' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^\[existing\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^answer = 42$' "${CODEX_HOME_DIR}/config.toml"
 if grep -q "double-sdd:codex-config" "${CODEX_HOME_DIR}/config.toml"; then

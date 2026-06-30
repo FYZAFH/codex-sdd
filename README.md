@@ -40,6 +40,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/FYZAFH/codex-sdd/main/script
 codex
 ```
 
+Install the hearing-derived branch into any project directory:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/FYZAFH/codex-sdd/codex/hearing-assets-installer/scripts/bootstrap-codex-project.sh) --project-root /path/to/project --repo-ref codex/hearing-assets-installer
+```
+
 Project-local install, Windows PowerShell:
 
 ```powershell
@@ -75,12 +81,14 @@ codex
 ## Source Layout
 
 - `codex/config.toml` - orchestrator instructions and registered subagents
+- `codex/agents/direction-worker-conductor.toml` - delegated task conductor
 - `codex/agents/implementer.toml` - one-task TDD implementer
 - `codex/agents/spec-code-reviewer.toml` - slice-level spec compliance reviewer
 - `codex/agents/quality-code-reviewer.toml` - slice-level engineering quality reviewer
 - `codex/agents/spec-document-reviewer.toml` - spec document reviewer
 - `codex/agents/plan-document-reviewer.toml` - plan document reviewer
 - `codex/skills/*/SKILL.md` - Codex-native workflow skills
+- `codex/skills/technical-direction-orchestrator/SKILL.md` - direction-level orchestration skill
 - `scripts/` - install, uninstall, bootstrap, and render helpers
 - `tests/shared/` - install/render validation
 
@@ -96,7 +104,7 @@ bash tests/shared/test-codex-project-install.sh
 ## Notes
 
 - Codex orchestration lives in `.codex/config.toml`, not `AGENTS.md`
-- Installed subagents explicitly disable inherited skills through `[[skills.config]]`
+- Installed subagents explicitly disable inherited Codex/system/plugin skills through `[[skills.config]]`
 
 ## License
 

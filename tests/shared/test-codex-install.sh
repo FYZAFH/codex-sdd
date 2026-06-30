@@ -14,13 +14,13 @@ cat > "${CODEX_HOME_DIR}/AGENTS.md" <<'EOF'
 Keep this line.
 EOF
 cat > "${CODEX_HOME_DIR}/config.toml" <<'EOF'
-approval_policy = "on-request"
+model = "gpt-test"
 
 [existing]
 answer = 42
 EOF
 
-HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/install-codex.sh"
+HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" bash "${REPO_ROOT}/scripts/install-codex.sh"
 
 test -f "${CODEX_HOME_DIR}/AGENTS.md"
 grep -q "Keep this line." "${CODEX_HOME_DIR}/AGENTS.md"
@@ -30,23 +30,30 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
 fi
 test -d "${TEST_HOME}/.agents/skills/writing-specs"
 test -d "${TEST_HOME}/.agents/skills/code-review"
+test -d "${TEST_HOME}/.agents/skills/technical-direction-orchestrator"
 grep -qx 'double-sdd' "${TEST_HOME}/.agents/skills/writing-specs/.double-sdd-owner"
 grep -q 'agent_type: implementer' "${TEST_HOME}/.agents/skills/subagent-driven-development/SKILL.md"
+test -f "${CODEX_HOME_DIR}/agents/direction-worker-conductor.toml"
 test -f "${CODEX_HOME_DIR}/agents/implementer.toml"
 test -f "${CODEX_HOME_DIR}/agents/spec-code-reviewer.toml"
 test -f "${CODEX_HOME_DIR}/agents/spec-document-reviewer.toml"
 grep -q '^# double-sdd:managed$' "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${CODEX_HOME_DIR}/agents/implementer.toml"
+grep -Fq 'name = "skill-creator"' "${CODEX_HOME_DIR}/agents/implementer.toml"
+grep -Fq 'name = "imagegen"' "${CODEX_HOME_DIR}/agents/implementer.toml"
+grep -Fq 'name = "chrome:Chrome"' "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -Fq "path = \"${TEST_HOME}/.agents/skills/writing-specs/SKILL.md\"" "${CODEX_HOME_DIR}/agents/implementer.toml"
-grep -q 'approval_policy = "on-request"' "${CODEX_HOME_DIR}/config.toml"
+grep -q 'model = "gpt-test"' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^\[existing\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^answer = 42$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:codex-config-root:start$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:codex-config-agents:start$' "${CODEX_HOME_DIR}/config.toml"
-grep -q '^compact_prompt = """$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^approval_policy = "never"$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^sandbox_mode = "danger-full-access"$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^\[agents\.direction-worker-conductor\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${CODEX_HOME_DIR}/config.toml"
 
-HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/uninstall-codex.sh"
+HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" bash "${REPO_ROOT}/scripts/uninstall-codex.sh"
 
 if [ -e "${TEST_HOME}/.agents/skills/writing-specs" ]; then
     echo "writing-specs skill still exists after uninstall" >&2
@@ -64,7 +71,7 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${CODEX_HOME_DIR}/config.toml"
+grep -q 'model = "gpt-test"' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^\[existing\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^answer = 42$' "${CODEX_HOME_DIR}/config.toml"
 if grep -q "double-sdd:codex-config" "${CODEX_HOME_DIR}/config.toml"; then

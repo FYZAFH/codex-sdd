@@ -16,13 +16,13 @@ Keep this line.
 EOF
 mkdir -p "${PROJECT_ROOT}/.codex"
 cat > "${PROJECT_ROOT}/.codex/config.toml" <<'EOF'
-approval_policy = "on-request"
+model = "gpt-test"
 
 [existing]
 answer = 42
 EOF
 
-"${REPO_ROOT}/scripts/install-codex-project.sh" --project-root "$PROJECT_ROOT"
+bash "${REPO_ROOT}/scripts/install-codex-project.sh" --project-root "$PROJECT_ROOT"
 
 test -f "${PROJECT_ROOT}/AGENTS.md"
 grep -q "Keep this line." "${PROJECT_ROOT}/AGENTS.md"
@@ -37,8 +37,11 @@ test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-document-reviewer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
+grep -Fq 'name = "skill-creator"' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
+grep -Fq 'name = "imagegen"' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
+grep -Fq 'name = "chrome:Chrome"' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/writing-specs/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^# double-sdd:codex-config-root:start$' "${PROJECT_ROOT}/.codex/config.toml"
@@ -68,7 +71,7 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 if grep -q "double-sdd:codex-config" "${PROJECT_ROOT}/.codex/config.toml"; then
@@ -86,8 +89,8 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/.git/info/exclude"; then
     exit 1
 fi
 
-"${REPO_ROOT}/scripts/install-codex-project.sh" --project-root "$PROJECT_ROOT"
-"${REPO_ROOT}/scripts/uninstall-codex-project.sh" --project-root "$PROJECT_ROOT"
+bash "${REPO_ROOT}/scripts/install-codex-project.sh" --project-root "$PROJECT_ROOT"
+bash "${REPO_ROOT}/scripts/uninstall-codex-project.sh" --project-root "$PROJECT_ROOT"
 
 if [ -e "${PROJECT_ROOT}/.agents/skills/writing-specs" ]; then
     echo "writing-specs skill still exists after uninstall" >&2
@@ -109,7 +112,7 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 if grep -q "double-sdd:codex-config" "${PROJECT_ROOT}/.codex/config.toml"; then

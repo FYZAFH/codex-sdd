@@ -17,7 +17,7 @@ Keep this line.
 EOF
 mkdir -p "${PROJECT_ROOT}/.codex"
 cat > "${PROJECT_ROOT}/.codex/config.toml" <<'EOF'
-approval_policy = "on-request"
+model = "gpt-test"
 
 [existing]
 answer = 42
@@ -40,8 +40,11 @@ test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/plan-document-reviewer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
+grep -Fq 'name = "skill-creator"' "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
+grep -Fq 'name = "imagegen"' "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
+grep -Fq 'name = "chrome:Chrome"' "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
 grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/code-review/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/spec-code-reviewer.toml"
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^# double-sdd:codex-config-root:start$' "${PROJECT_ROOT}/.codex/config.toml"
@@ -75,7 +78,7 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 if grep -q "double-sdd:codex-config" "${PROJECT_ROOT}/.codex/config.toml"; then
@@ -115,7 +118,7 @@ if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     exit 1
 fi
 
-grep -q 'approval_policy = "on-request"' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q 'model = "gpt-test"' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^\[existing\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^answer = 42$' "${PROJECT_ROOT}/.codex/config.toml"
 if grep -q "double-sdd:codex-config" "${PROJECT_ROOT}/.codex/config.toml"; then

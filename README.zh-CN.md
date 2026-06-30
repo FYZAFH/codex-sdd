@@ -40,6 +40,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/FYZAFH/codex-sdd/main/script
 codex
 ```
 
+把 hearing 提取分支安装到任意项目目录：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/FYZAFH/codex-sdd/codex/hearing-assets-installer/scripts/bootstrap-codex-project.sh) --project-root /path/to/project --repo-ref codex/hearing-assets-installer
+```
+
 项目内安装，适用于 Windows PowerShell：
 
 ```powershell
@@ -75,12 +81,14 @@ codex
 ## 仓库结构
 
 - `codex/config.toml`：编排器指令和已注册的子代理配置
+- `codex/agents/direction-worker-conductor.toml`：委托任务执行编排代理
 - `codex/agents/implementer.toml`：单任务 TDD 实现代理
 - `codex/agents/spec-code-reviewer.toml`：针对单个代码切片的规格一致性审查代理
 - `codex/agents/quality-code-reviewer.toml`：针对单个代码切片的工程质量审查代理
 - `codex/agents/spec-document-reviewer.toml`：规格文档审查代理
 - `codex/agents/plan-document-reviewer.toml`：计划文档审查代理
 - `codex/skills/*/SKILL.md`：Codex 原生工作流技能
+- `codex/skills/technical-direction-orchestrator/SKILL.md`：技术方向层编排技能
 - `scripts/`：安装、卸载、bootstrap 和渲染辅助脚本
 - `tests/shared/`：安装与渲染验证脚本
 
@@ -96,7 +104,7 @@ bash tests/shared/test-codex-project-install.sh
 ## 说明
 
 - Codex 的配置位于 `.codex/config.toml`，而不是 `AGENTS.md`（因为subagent会继承AGENTS.md）
-- 已安装的子代理会通过 `[[skills.config]]` 显式禁用技能。由于codex的子代理会默认继承skill，只要存在一个skill未被禁用，使用skill的说明文字就会出现在子代理的系统提示词中分散注意力并且额外消耗token，建议自行修改 agents/ 文件夹中子代理定义文件禁用所有skill。
+- 已安装的子代理会通过 `[[skills.config]]` 显式禁用本项目、Codex 系统及常见插件技能，避免子代理继承不相关 skill 说明并额外消耗 token。
 - 调整子代理的模型请通过取消 agents/ 中的注释并修改字段来进行。
 
 ## 许可证

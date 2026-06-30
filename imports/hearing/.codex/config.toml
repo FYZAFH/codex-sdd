@@ -1,0 +1,40 @@
+# double-sdd:codex-config-root:start
+# double-sdd:codex-config-root:end
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+[agents]
+# 最大并行线程数
+max_threads = 8
+
+# 最大嵌套深度
+max_depth = 3
+# double-sdd:codex-config-agents:start
+
+[agents.implementer]
+description = "Implements changes in the repository."
+config_file = "./agents/implementer.toml"
+
+[agents.spec-code-reviewer]
+description = "Reviews whether the current implementation slice matches the requested spec-defined behavior and scope."
+config_file = "./agents/spec-code-reviewer.toml"
+
+[agents.quality-code-reviewer]
+description = "Reviews engineering quality for the current implementation slice."
+config_file = "./agents/quality-code-reviewer.toml"
+
+[agents.spec-document-reviewer]
+description = "Reviews design specs before planning."
+config_file = "./agents/spec-document-reviewer.toml"
+
+[agents.plan-document-reviewer]
+description = "Reviews full implementation plans before execution."
+config_file = "./agents/plan-document-reviewer.toml"
+
+[agents.roundtable-participant]
+description = "Contributes one bounded perspective to a host-framed roundtable discussion."
+config_file = "./agents/roundtable-participant.toml"
+
+[agents.direction-worker-conductor]
+description = "Runs one full delegated double-SDD task and reports workflow gates to its caller."
+config_file = "./agents/direction-worker-conductor.toml"
+# double-sdd:codex-config-agents:end

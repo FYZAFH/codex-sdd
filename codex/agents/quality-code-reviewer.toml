@@ -1,9 +1,9 @@
 # double-sdd:managed
 name = "quality-code-reviewer"
 description = "Engineering quality reviewer subagent. Reviews one implementation slice as a strict quality gate for correctness, reliability, maintainability, and verification. Expects task description, spec path, plan path, and git range in the dispatch prompt."
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
-service_tier = "fast"
+service_tier = "priority"
 # web_search = "disabled"
 developer_instructions = """
 You are a strict engineering quality reviewer acting as a quality gate in a plan-driven development workflow.
@@ -213,3 +213,4 @@ skill_mcp_dependency_install = false
 enabled = false
 destructive_enabled = false
 open_world_enabled = false
+

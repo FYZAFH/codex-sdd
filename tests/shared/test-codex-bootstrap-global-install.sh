@@ -25,7 +25,7 @@ git -C "$SOURCE_REPO" config user.email test@example.com >/dev/null 2>&1
 git -C "$SOURCE_REPO" add . >/dev/null 2>&1
 git -C "$SOURCE_REPO" commit -m "snapshot" >/dev/null 2>&1
 
-HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/bootstrap-codex-global.sh" \
+HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" bash "${REPO_ROOT}/scripts/bootstrap-codex-global.sh" \
     --repo-url "$SOURCE_REPO" \
     --checkout-dir "$CACHE_DIR"
 
@@ -38,16 +38,20 @@ if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then
 fi
 test -d "${TEST_HOME}/.agents/skills/writing-specs"
 test -d "${TEST_HOME}/.agents/skills/code-review"
+test -d "${TEST_HOME}/.agents/skills/technical-direction-orchestrator"
+test -f "${CODEX_HOME_DIR}/agents/direction-worker-conductor.toml"
 test -f "${CODEX_HOME_DIR}/agents/implementer.toml"
 test -f "${CODEX_HOME_DIR}/agents/spec-document-reviewer.toml"
 test -f "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:managed$' "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -q '^\[\[skills\.config\]\]$' "${CODEX_HOME_DIR}/agents/implementer.toml"
 grep -Fq "path = \"${TEST_HOME}/.agents/skills/writing-specs/SKILL.md\"" "${CODEX_HOME_DIR}/agents/implementer.toml"
-grep -q '^compact_prompt = """$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^approval_policy = "never"$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^sandbox_mode = "danger-full-access"$' "${CODEX_HOME_DIR}/config.toml"
+grep -q '^\[agents\.direction-worker-conductor\]$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${CODEX_HOME_DIR}/config.toml"
 
-HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/bootstrap-codex-global.sh" \
+HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" bash "${REPO_ROOT}/scripts/bootstrap-codex-global.sh" \
     --repo-url "$SOURCE_REPO" \
     --checkout-dir "$CACHE_DIR" \
     --uninstall

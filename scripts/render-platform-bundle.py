@@ -9,6 +9,26 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# Codex may auto-install system and plugin skills in user-specific cache paths.
+# Disable the known inherited skills by model-visible name so custom agents stay focused.
+DISABLED_INHERITED_SKILL_NAMES = [
+    "chrome:Chrome",
+    "documents:documents",
+    "github:gh-address-comments",
+    "github:gh-fix-ci",
+    "github:github",
+    "github:yeet",
+    "imagegen",
+    "imagen",
+    "openai-docs",
+    "plugin-creator",
+    "presentations:Presentations",
+    "skill-creator",
+    "skill-installer",
+    "skill-seeker",
+    "spreadsheets:Spreadsheets",
+]
+
 
 def copy_tree(src_root: Path, dst_root: Path) -> None:
     for src_path in sorted(src_root.rglob("*")):
@@ -34,6 +54,17 @@ def codex_skill_dirs() -> list[Path]:
 def render_codex_agent(source_agent: Path, logical_root: Path) -> str:
     source_text = source_agent.read_text(encoding="utf-8").rstrip("\n")
     skill_blocks = []
+
+    for skill_name in DISABLED_INHERITED_SKILL_NAMES:
+        skill_blocks.append(
+            "\n".join(
+                [
+                    "[[skills.config]]",
+                    f"name = {toml_quote(skill_name)}",
+                    "enabled = false",
+                ]
+            )
+        )
 
     for skill_dir in codex_skill_dirs():
         skill_path = (logical_root / ".agents" / "skills" / skill_dir.name / "SKILL.md").as_posix()

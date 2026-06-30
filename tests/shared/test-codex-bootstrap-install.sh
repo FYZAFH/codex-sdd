@@ -21,13 +21,15 @@ git -C "$SOURCE_REPO" config user.email test@example.com >/dev/null 2>&1
 git -C "$SOURCE_REPO" add . >/dev/null 2>&1
 git -C "$SOURCE_REPO" commit -m "snapshot" >/dev/null 2>&1
 
-"${REPO_ROOT}/scripts/bootstrap-codex-project.sh" \
+bash "${REPO_ROOT}/scripts/bootstrap-codex-project.sh" \
     --project-root "$PROJECT_ROOT" \
     --repo-url "$SOURCE_REPO" \
     --checkout-dir "$CACHE_DIR"
 
 test -d "${CACHE_DIR}/.git"
 test -d "${PROJECT_ROOT}/.agents/skills/writing-specs"
+test -d "${PROJECT_ROOT}/.agents/skills/technical-direction-orchestrator"
+test -f "${PROJECT_ROOT}/.codex/agents/direction-worker-conductor.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 test -f "${PROJECT_ROOT}/.codex/agents/plan-document-reviewer.toml"
 test -f "${PROJECT_ROOT}/.codex/config.toml"
@@ -38,7 +40,9 @@ if [ -e "${PROJECT_ROOT}/AGENTS.md" ]; then
 fi
 grep -q '^\[\[skills\.config\]\]$' "${PROJECT_ROOT}/.codex/agents/implementer.toml"
 grep -Fq "path = \"${PROJECT_ROOT}/.agents/skills/writing-specs/SKILL.md\"" "${PROJECT_ROOT}/.codex/agents/implementer.toml"
-grep -q '^compact_prompt = """$' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q '^approval_policy = "never"$' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q '^sandbox_mode = "danger-full-access"$' "${PROJECT_ROOT}/.codex/config.toml"
+grep -q '^\[agents\.direction-worker-conductor\]$' "${PROJECT_ROOT}/.codex/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${PROJECT_ROOT}/.codex/config.toml"
 
 "${PROJECT_ROOT}/.double-sdd/uninstall"
