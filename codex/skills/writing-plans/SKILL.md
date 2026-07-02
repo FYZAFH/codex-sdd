@@ -45,6 +45,25 @@ Write tasks so they fit that execution model:
 - each task should have clear spec boundaries and clear verification steps
 - each task should leave the repo in a state that can be reviewed before moving on
 
+## Runtime Metadata Handoff
+
+`writing-plans` has two valid invocation modes:
+
+1. Upstream `writing-specs` handoff: the invocation provides the exact runtime `metadataPath` created by `writing-specs`, with no `RUN_ID` and no `NO_UPSTREAM_METADATA`.
+2. Direct/manual planning: the invocation explicitly provides the no-upstream signal `NO_UPSTREAM_METADATA=true`.
+
+Default to stop-and-ask unless the invocation either provides an exact `metadataPath` or explicitly provides `NO_UPSTREAM_METADATA=true`. Do not silently treat a missing or broken `writing-specs` handoff as a manual planning run. A direct/manual run must not rely on omitted `metadataPath` alone.
+
+If `writing-plans` is invoked with a runtime `metadataPath` from `writing-specs`, record the exact path in this planning run's orchestration and handoff context.
+
+- Preserve the path exactly as received; do not reinterpret it from hidden session memory.
+- Treat this as upstream metadataPath mode only. Do not include `RUN_ID` or `NO_UPSTREAM_METADATA` in the execution handoff with an upstream `metadataPath`.
+- The plan document does not need to include `metadataPath` unless it is relevant to the durable implementation instructions.
+- When the user approves execution, pass the exact same `metadataPath` to `subagent-driven-development` as part of the execution handoff.
+- If the upstream `writing-specs` workflow created runtime metadata but did not provide the exact `metadataPath`, stop and ask for correction before continuing.
+- For direct/manual planning runs, record `NO_UPSTREAM_METADATA=true` in the orchestration and handoff context. Do not invent a `metadataPath`; state that no runtime metadata path was received.
+- If a direct/manual planning run should create a direct-entry execution run after approval, also collect and pass an explicit filesystem-safe `RUN_ID` with the same character rules used by `subagent-driven-development`: ASCII letters, numbers, `.`, `_`, and `-` only, with no `..`, path separators, drive prefixes, shell metacharacters, or non-ASCII characters. If `RUN_ID` is missing or unsafe, stop and ask before execution handoff.
+
 ## File Structure
 
 Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
@@ -55,6 +74,13 @@ Before defining tasks, map out which files will be created or modified and what 
 - In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
 
 This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
+
+## Code Discipline Constraints
+
+When code changes are expected, read the spec for exception and global-state constraints and incorporate them into the implementation plan as concrete implementation steps, review instructions, and verification expectations where relevant.
+
+- If the spec includes exception behavior constraints, turn them into concrete implementation and review instructions. Do not add new throw sites unless each one has clear semantic, diagnostic, or recovery value.
+- If the spec includes global-state constraints, plan class or instance scope where sufficient. If a global constant is necessary, place it under an appropriate `consts` directory following project conventions.
 
 ## Bite-Sized Task Granularity
 
@@ -163,9 +189,15 @@ After completing the full plan document:
 
 ## Execution Handoff
 
-After saving the plan:
+After the plan document is complete and the plan review loop has approved it, ask the user for approval before invoking `subagent-driven-development` or beginning implementation.
+
+Do not start implementation from this skill until the user has explicitly agreed to execute the reviewed plan.
 
 **"Plan complete and saved to `docs/double-sdd/plans/<filename>.md`. Ready to execute?"**
 
 **REQUIRED:** Use the `subagent-driven-development` skill for execution.
 - Fresh subagent per task + parallel spec/quality review with a spec gate
+- If this planning run received a runtime `metadataPath`, pass that exact `metadataPath` to `subagent-driven-development` in the execution handoff without `RUN_ID` or `NO_UPSTREAM_METADATA`.
+- If this planning run used `NO_UPSTREAM_METADATA=true`, pass `NO_UPSTREAM_METADATA=true` and the explicit filesystem-safe `RUN_ID` to `subagent-driven-development`; do not pass an omitted `metadataPath` as the only signal for direct/manual execution.
+- If this planning run received a runtime `metadataPath` and the user declines execution, discards the plan, or ends the workflow after planning rather than intentionally leaving execution pending, update the handed-off metadata `status` to `abandoned` when practical before ending.
+- Keep handed-off metadata `status` as `active` only when execution is intentionally pending or when passing the exact `metadataPath` to `subagent-driven-development` after approval.
