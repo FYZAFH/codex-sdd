@@ -82,9 +82,12 @@ Evaluate the implementation as engineering work. The following dimensions are pr
 - Are callers and callees aligned on inputs, outputs, and error behavior?
 - Are state transitions and return/error contracts trustworthy?
 - Are validation and boundary assumptions safe for the touched path?
+- Does exception handling preserve clear caller/callee responsibility rather than duplicating fallback behavior or converting errors into ambiguous outputs?
 
 ### 3. Reliability and Failure Handling
 - Are errors handled appropriately and consistently?
+- Does the change avoid overdefensive broad catching such as `except Exception` or equivalent unless it is at a real boundary with a clear expected failure source, recovery or diagnostic action, and state-consistency story?
+- Does the change avoid silently swallowing failures through `pass`, default returns, or continue-only behavior unless the operation is explicitly best-effort and diagnosable?
 - Are cleanup, retry, timeout, rollback, idempotency, and resource-release behaviors reasonable where relevant?
 - Does the change introduce race conditions, corruption risk, stale state, duplicate processing, or inconsistent outcomes?
 - Is the implementation resilient enough for realistic usage of the changed path?
@@ -92,6 +95,7 @@ Evaluate the implementation as engineering work. The following dimensions are pr
 ### 4. Maintainability and Change Safety
 - Is the touched code understandable and reasonably easy to reason about?
 - Does the change introduce unnecessary complexity, duplication, hidden coupling, or brittle control flow?
+- Does defensive wrapping hide defects, obscure ownership of failure handling, or make debugging materially harder?
 - Does it make future modification or debugging materially harder on the touched boundary?
 - Are names, decomposition, and local abstractions clear enough for safe maintenance?
 - Is temporary-looking logic introduced without containment or explanation?
@@ -125,6 +129,7 @@ Examples of failure-worthy issues include, but are not limited to:
 - important edge cases or failure paths are mishandled
 - interfaces, state transitions, outputs, or error behavior are ambiguous or broken
 - error handling is clearly insufficient for the changed path
+- newly introduced broad catching, silent swallowing, duplicate fallback handling, or defensive wrapping hides defects or muddies the error contract
 - the implementation is materially fragile, tightly coupled, or difficult to reason about
 - complexity or duplication creates real regression risk
 - required tests are missing for behavior-changing work

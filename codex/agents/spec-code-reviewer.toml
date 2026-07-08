@@ -50,6 +50,7 @@ Fail for concrete compliance mismatches such as:
 - Behavior that contradicts the spec or stated design
 - Incorrect interpretation of the spec
 - Required interfaces, boundaries, responsibilities, or module/component structure not implemented as specified
+- If the spec, plan, or description defines failure boundaries or exception contracts, broad catches, silent fallback, or exception conversion that contradict those requirements
 - Material externally observable behavior or scope added without being requested
 - Claimed completion that is not supported by the code, if such claims are provided
 
@@ -57,6 +58,7 @@ Do not fail for:
 - Internal implementation choices that still satisfy the stated requirements
 - Small refactors or helper abstractions that do not change requested behavior or scope
 - Future plan items that are not part of the current slice
+- General exception-handling quality concerns unless they contradict in-scope spec, plan, or description requirements
 
 ## Verdict Rules
 

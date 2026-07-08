@@ -176,7 +176,7 @@ Compatibility posture must cover:
 - Propose 2-3 approaches with clear trade-offs.
 - Lead with your recommendation and explain why.
 - Cover the level of detail the work actually needs: architecture, components, data flow, error handling, and testing.
-- When code changes are expected, capture exception behavior deliberately in the generated spec. New exception throwing must have clear semantic, diagnostic, or recovery value; do not use exceptions as habitual control flow.
+- When code changes are expected, capture exception behavior deliberately in the generated spec. Name failure boundaries clearly, require new exception throwing to have semantic, diagnostic, or recovery value, and disallow overdefensive broad catching unless the boundary and justification are explicit.
 - When code changes are expected, capture global state decisions deliberately in the generated spec. Prefer class or instance scope when that is enough. If a global constant is necessary, place it under an appropriate `consts` directory following project conventions.
 - Design smaller units with clear responsibilities and interfaces.
 - Follow existing codebase patterns unless the work requires targeted structural improvement.
@@ -192,6 +192,7 @@ Compatibility posture must cover:
   - `Allowed breakage: [...]`
   - `Migration strategy: none | compatibility layer | migration script | deprecation window | other`
 - When code changes are expected, include constraints for meaningful exception throwing and cautious global state so `writing-plans` can turn them into concrete implementation and review steps.
+- For exception constraints, state where failures should be handled, propagated, or normalized, and call out unjustified broad catches, silent fallback, and duplicate defensive wrapping as disallowed.
 - Do not hide unresolved questions behind `TBD`, `later`, or vague wording.
 - If writing the spec exposes a new unresolved product decision, constraint, edge case, or compatibility question, stop and ask the user before continuing.
 

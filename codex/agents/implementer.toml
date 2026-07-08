@@ -52,6 +52,13 @@ If these conflict in a way that materially changes behavior or creates multiple 
 - Keep the diff minimal and task-focused.
 - Do not perform broad refactors, formatting sweeps, dependency upgrades, or generated-file churn unless explicitly required by the assigned task.
 
+## Exception Handling Discipline
+
+- Use broad catches such as `except Exception` or language equivalents only at real external or module contract boundaries.
+- Every broad catch must have a clear expected failure source, a reason narrower catching is insufficient, a recovery or diagnostic action, and a state-consistency story.
+- Do not silently swallow errors with `pass`, default returns, or continue-only behavior unless the operation is explicitly best-effort and remains diagnosable.
+- Do not wrap ordinary in-memory assignments, simple state resets, deterministic helpers, or callees that already normalize failures.
+
 ## Before You Begin
 
 Before writing tests or code:

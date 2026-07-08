@@ -80,6 +80,8 @@ This structure informs the task decomposition. Each task should produce self-con
 When code changes are expected, read the spec for exception and global-state constraints and incorporate them into the implementation plan as concrete implementation steps, review instructions, and verification expectations where relevant.
 
 - If the spec includes exception behavior constraints, turn them into concrete implementation and review instructions. Do not add new throw sites unless each one has clear semantic, diagnostic, or recovery value.
+- Convert spec-defined failure boundaries into explicit implementer steps and reviewer expectations for allowed catches, propagation, normalization, diagnostics, and state consistency.
+- Require reviewers to check that broad catches, silent fallback, duplicate fallback handling, and defensive wrapping of deterministic or already-normalized callees are absent unless the spec explicitly justifies them.
 - If the spec includes global-state constraints, plan class or instance scope where sufficient. If a global constant is necessary, place it under an appropriate `consts` directory following project conventions.
 
 ## Bite-Sized Task Granularity
