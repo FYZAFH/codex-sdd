@@ -44,7 +44,7 @@ codex
 
 ```powershell
 cd ~\example_sound
-irm https://raw.githubusercontent.com/FYZAFH/codex-sdd/main/scripts/bootstrap-codex-project.ps1 | iex
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/FYZAFH/codex-sdd/main/scripts/bootstrap-codex-project.ps1))) -RepoRef xiting
 codex
 ```
 

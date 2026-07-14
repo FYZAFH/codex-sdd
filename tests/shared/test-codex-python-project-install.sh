@@ -10,6 +10,7 @@ trap 'rm -rf "$TEST_ROOT"' EXIT
 PROJECT_ROOT="${TEST_ROOT}/example_sound"
 ARTIFACT_ROOT="${PROJECT_ROOT}/.double-sdd"
 mkdir -p "$PROJECT_ROOT"
+mkdir -p "${ARTIFACT_ROOT}/scripts"
 
 git -C "$PROJECT_ROOT" init >/dev/null 2>&1
 cat > "${PROJECT_ROOT}/AGENTS.md" <<'EOF'
@@ -21,6 +22,12 @@ approval_policy = "on-request"
 
 [existing]
 answer = 42
+EOF
+cat > "${ARTIFACT_ROOT}/scripts/keep.txt" <<'EOF'
+keep
+EOF
+cat > "${ARTIFACT_ROOT}/scripts/__init__.py" <<'EOF'
+# user package
 EOF
 
 python3 "${REPO_ROOT}/scripts/codex_installer.py" install-project \
@@ -49,6 +56,19 @@ grep -q '^# double-sdd:codex-config-agents:start$' "${PROJECT_ROOT}/.codex/confi
 test -x "${ARTIFACT_ROOT}/uninstall"
 test -f "${ARTIFACT_ROOT}/uninstall.cmd"
 test -f "${ARTIFACT_ROOT}/uninstall.ps1"
+grep -qx 'keep' "${ARTIFACT_ROOT}/scripts/keep.txt"
+grep -qx '# user package' "${ARTIFACT_ROOT}/scripts/__init__.py"
+test -f "${ARTIFACT_ROOT}/scripts/double_sdd/__init__.py"
+test -f "${ARTIFACT_ROOT}/scripts/double_sdd/setup_worktree.py"
+test -f "${ARTIFACT_ROOT}/scripts/double_sdd/metadata.py"
+test -f "${ARTIFACT_ROOT}/scripts/double_sdd/path_safety.py"
+test ! -e "${ARTIFACT_ROOT}/scripts/install-codex-project.sh"
+python3 "${ARTIFACT_ROOT}/scripts/double_sdd/setup_worktree.py" --help >/dev/null
+grep -q 'python \.double-sdd/scripts/double_sdd/setup_worktree.py --branch <feature-branch>' "${PROJECT_ROOT}/.agents/skills/subagent-driven-development/SKILL.md"
+if grep -q 'python scripts/double_sdd/setup_worktree.py' "${PROJECT_ROOT}/.agents/skills/subagent-driven-development/SKILL.md"; then
+    echo "subagent-driven-development skill still points at repo-local setup helper" >&2
+    exit 1
+fi
 grep -q "# double-sdd:start" "${PROJECT_ROOT}/.git/info/exclude"
 grep -q ".double-sdd/" "${PROJECT_ROOT}/.git/info/exclude"
 
@@ -65,10 +85,12 @@ if [ -e "${PROJECT_ROOT}/.codex/agents/implementer.toml" ]; then
     exit 1
 fi
 
-if [ -e "${ARTIFACT_ROOT}" ]; then
-    echo ".double-sdd still exists after generated uninstall" >&2
+if [ -e "${ARTIFACT_ROOT}/scripts/double_sdd" ]; then
+    echo "double_sdd helper package still exists after generated uninstall" >&2
     exit 1
 fi
+grep -qx 'keep' "${ARTIFACT_ROOT}/scripts/keep.txt"
+grep -qx '# user package' "${ARTIFACT_ROOT}/scripts/__init__.py"
 
 if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     echo "AGENTS.md should stay untouched after generated uninstall" >&2
@@ -105,10 +127,12 @@ if [ -e "${PROJECT_ROOT}/.codex/agents/implementer.toml" ]; then
     exit 1
 fi
 
-if [ -e "${ARTIFACT_ROOT}" ]; then
-    echo ".double-sdd still exists after uninstall" >&2
+if [ -e "${ARTIFACT_ROOT}/scripts/double_sdd" ]; then
+    echo "double_sdd helper package still exists after uninstall" >&2
     exit 1
 fi
+grep -qx 'keep' "${ARTIFACT_ROOT}/scripts/keep.txt"
+grep -qx '# user package' "${ARTIFACT_ROOT}/scripts/__init__.py"
 
 if grep -q "double-sdd:start" "${PROJECT_ROOT}/AGENTS.md"; then
     echo "AGENTS.md should stay untouched after uninstall" >&2

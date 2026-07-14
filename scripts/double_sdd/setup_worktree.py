@@ -11,25 +11,47 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    helper_scripts_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(helper_scripts_root))
+    sys.path.insert(0, str(repo_root))
 
-from scripts.double_sdd.metadata import (
-    ACTIVE_STATUS,
-    MetadataError,
-    _validate_metadata_common_fields,
-    find_single_preimplementation_metadata,
-    metadata_relpath_for_run_id,
-    read_metadata,
-    validate_metadata_relpath,
-    validate_reused_metadata,
-)
-from scripts.double_sdd.path_safety import (
-    PathSafetyError,
-    ensure_contained,
-    is_mount_point,
-    reject_link_or_reparse,
-    validate_worktrees_anchor,
-)
+try:
+    from scripts.double_sdd.metadata import (
+        ACTIVE_STATUS,
+        MetadataError,
+        _validate_metadata_common_fields,
+        find_single_preimplementation_metadata,
+        metadata_relpath_for_run_id,
+        read_metadata,
+        validate_metadata_relpath,
+        validate_reused_metadata,
+    )
+    from scripts.double_sdd.path_safety import (
+        PathSafetyError,
+        ensure_contained,
+        is_mount_point,
+        reject_link_or_reparse,
+        validate_worktrees_anchor,
+    )
+except ModuleNotFoundError:
+    from double_sdd.metadata import (
+        ACTIVE_STATUS,
+        MetadataError,
+        _validate_metadata_common_fields,
+        find_single_preimplementation_metadata,
+        metadata_relpath_for_run_id,
+        read_metadata,
+        validate_metadata_relpath,
+        validate_reused_metadata,
+    )
+    from double_sdd.path_safety import (
+        PathSafetyError,
+        ensure_contained,
+        is_mount_point,
+        reject_link_or_reparse,
+        validate_worktrees_anchor,
+    )
 
 
 COMPLETED_OR_ABANDONED = frozenset(("completed", "abandoned"))

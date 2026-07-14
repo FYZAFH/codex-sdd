@@ -8,8 +8,10 @@ TEST_HOME="$(mktemp -d /tmp/double-sdd-codex-home.XXXXXX)"
 trap 'rm -rf "$TEST_HOME"' EXIT
 
 CODEX_HOME_DIR="${TEST_HOME}/custom-config/.codex"
+GLOBAL_ARTIFACT_ROOT="${TEST_HOME}/.double-sdd"
 
 mkdir -p "${CODEX_HOME_DIR}"
+mkdir -p "${GLOBAL_ARTIFACT_ROOT}/scripts"
 cat > "${CODEX_HOME_DIR}/AGENTS.md" <<'EOF'
 Keep this line.
 EOF
@@ -18,6 +20,12 @@ approval_policy = "on-request"
 
 [existing]
 answer = 42
+EOF
+cat > "${GLOBAL_ARTIFACT_ROOT}/scripts/keep.txt" <<'EOF'
+keep
+EOF
+cat > "${GLOBAL_ARTIFACT_ROOT}/scripts/__init__.py" <<'EOF'
+# user package
 EOF
 
 HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/install-codex.sh"
@@ -45,6 +53,15 @@ grep -q '^# double-sdd:codex-config-root:start$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^# double-sdd:codex-config-agents:start$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^compact_prompt = """$' "${CODEX_HOME_DIR}/config.toml"
 grep -q '^config_file = "\./agents/implementer.toml"$' "${CODEX_HOME_DIR}/config.toml"
+grep -qx 'keep' "${GLOBAL_ARTIFACT_ROOT}/scripts/keep.txt"
+grep -qx '# user package' "${GLOBAL_ARTIFACT_ROOT}/scripts/__init__.py"
+test -f "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd/__init__.py"
+test -f "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd/setup_worktree.py"
+test -f "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd/metadata.py"
+test -f "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd/path_safety.py"
+test ! -e "${GLOBAL_ARTIFACT_ROOT}/scripts/install-codex.sh"
+python3 "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd/setup_worktree.py" --help >/dev/null
+grep -q '~/.double-sdd/scripts/double_sdd/setup_worktree.py' "${TEST_HOME}/.agents/skills/subagent-driven-development/SKILL.md"
 
 HOME="$TEST_HOME" CODEX_HOME="${CODEX_HOME_DIR}" "${REPO_ROOT}/scripts/uninstall-codex.sh"
 
@@ -57,6 +74,13 @@ if [ -e "${CODEX_HOME_DIR}/agents/implementer.toml" ]; then
     echo "implementer subagent still exists after uninstall" >&2
     exit 1
 fi
+
+if [ -e "${GLOBAL_ARTIFACT_ROOT}/scripts/double_sdd" ]; then
+    echo "global double_sdd helper package still exists after uninstall" >&2
+    exit 1
+fi
+grep -qx 'keep' "${GLOBAL_ARTIFACT_ROOT}/scripts/keep.txt"
+grep -qx '# user package' "${GLOBAL_ARTIFACT_ROOT}/scripts/__init__.py"
 
 grep -q "Keep this line." "${CODEX_HOME_DIR}/AGENTS.md"
 if grep -q "double-sdd:start" "${CODEX_HOME_DIR}/AGENTS.md"; then

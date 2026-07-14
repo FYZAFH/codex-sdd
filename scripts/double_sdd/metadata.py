@@ -7,12 +7,20 @@ import stat
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from scripts.double_sdd.path_safety import (
-    PathSafetyError,
-    ensure_contained,
-    reject_link_or_reparse,
-    validate_worktrees_anchor,
-)
+try:
+    from scripts.double_sdd.path_safety import (
+        PathSafetyError,
+        ensure_contained,
+        reject_link_or_reparse,
+        validate_worktrees_anchor,
+    )
+except ModuleNotFoundError:
+    from double_sdd.path_safety import (
+        PathSafetyError,
+        ensure_contained,
+        reject_link_or_reparse,
+        validate_worktrees_anchor,
+    )
 
 
 METADATA_SUFFIX = ".metadata.json"

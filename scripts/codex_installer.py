@@ -23,6 +23,7 @@ EXCLUDE_MARKER_END = "# double-sdd:end"
 SKILL_OWNER_MARKER = ".double-sdd-owner"
 SKILL_OWNER_VALUE = "double-sdd"
 CUSTOM_AGENT_MARKER = "# double-sdd:managed"
+RUNTIME_HELPER_PACKAGE = Path("scripts") / "double_sdd"
 
 CONFIG_ROOT_CONFLICT_PATTERNS = [
     ("developer_instructions", re.compile(r"(?m)^\s*developer_instructions\s*=")),
@@ -84,6 +85,10 @@ def default_global_skills_root() -> Path:
 
 def default_global_home_root() -> Path:
     return resolve_path(Path.home())
+
+
+def default_global_artifact_root() -> Path:
+    return default_global_home_root() / ".double-sdd"
 
 
 def default_global_agents_root(codex_home: Path) -> Path:
@@ -231,6 +236,36 @@ def install_agent_target(source_agent: Path, target: Path) -> None:
     shutil.copy2(source_agent, target)
 
 
+def install_runtime_helpers(repo_root: Path, artifact_root: Path) -> None:
+    source_package = repo_root / RUNTIME_HELPER_PACKAGE
+    target_scripts_root = artifact_root / "scripts"
+    target_package = target_scripts_root / "double_sdd"
+
+    remove_path(target_package)
+    target_scripts_root.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(
+        source_package,
+        target_package,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+
+
+def cleanup_global_runtime_helpers(artifact_root: Path) -> None:
+    scripts_root = artifact_root / "scripts"
+    remove_path(scripts_root / "double_sdd")
+    remove_path(scripts_root / "__pycache__")
+    prune_empty_directories(scripts_root, artifact_root)
+    if artifact_root.is_dir() and not any(artifact_root.iterdir()):
+        remove_path(artifact_root)
+
+
+def cleanup_runtime_helper_package(artifact_root: Path) -> None:
+    scripts_root = artifact_root / "scripts"
+    remove_path(scripts_root / "double_sdd")
+    remove_path(scripts_root / "__pycache__")
+    prune_empty_directories(scripts_root, artifact_root)
+
+
 def validate_skill_targets(staging_root: Path, skills_root: Path) -> None:
     staging_skills_root = staging_root / ".agents" / "skills"
     for skill_dir in sorted(staging_skills_root.iterdir()):
@@ -302,6 +337,7 @@ def install_global(repo_root: Path, codex_home: Path) -> None:
     codex_home = resolve_path(codex_home)
     skills_root = default_global_skills_root()
     home_root = default_global_home_root()
+    artifact_root = default_global_artifact_root()
     agents_root = default_global_agents_root(codex_home)
     config_file = default_global_config_file(codex_home)
 
@@ -310,8 +346,11 @@ def install_global(repo_root: Path, codex_home: Path) -> None:
         render_codex_bundle(repo_root, staging_root, home_root)
         install_rendered_bundle(staging_root, skills_root, agents_root, config_file)
 
+    install_runtime_helpers(repo_root, artifact_root)
+
     print(f"Installed Codex skills to {skills_root}")
     print(f"Installed Codex subagents to {agents_root}")
+    print(f"Installed global double-SDD helpers to {artifact_root}")
     print(f"Updated {config_file} with managed double-SDD Codex config")
 
 
@@ -319,18 +358,21 @@ def uninstall_global(codex_home: Path) -> None:
     codex_home = resolve_path(codex_home)
     skills_root = default_global_skills_root()
     home_root = default_global_home_root()
+    artifact_root = default_global_artifact_root()
     agents_root = default_global_agents_root(codex_home)
     config_file = default_global_config_file(codex_home)
 
     remove_managed_skill_targets(skills_root)
     remove_managed_agent_targets(agents_root)
     remove_managed_config_file(config_file)
+    cleanup_global_runtime_helpers(artifact_root)
 
     prune_empty_directories(skills_root, home_root)
     prune_empty_directories(agents_root, codex_home)
 
     print(f"Removed Codex skills from {skills_root}")
     print(f"Removed Codex subagents from {agents_root}")
+    print(f"Removed global double-SDD helpers from {artifact_root}")
     print(f"Removed managed double-SDD Codex config from {config_file}")
 
 
@@ -469,7 +511,12 @@ def build_shell_uninstaller(
         remove_git_exclude
 
         printf 'Removing project-local double-SDD helpers from %s\\n' "$ARTIFACT_ROOT"
-        exec /bin/sh -c 'rm -rf "$1"' sh "$ARTIFACT_ROOT"
+        rm -rf "$ARTIFACT_ROOT/scripts/double_sdd" "$ARTIFACT_ROOT/scripts/__pycache__"
+        rmdir "$ARTIFACT_ROOT/scripts" 2>/dev/null || true
+        rm -f "$ARTIFACT_ROOT/codex" "$ARTIFACT_ROOT/codex.cmd" "$ARTIFACT_ROOT/codex.ps1"
+        rm -rf "$ARTIFACT_ROOT/codex-home"
+        rm -f "$ARTIFACT_ROOT/uninstall.cmd" "$ARTIFACT_ROOT/uninstall.ps1" "$ARTIFACT_ROOT/uninstall"
+        rmdir "$ARTIFACT_ROOT" 2>/dev/null || true
         """
     )
 
@@ -493,6 +540,16 @@ def build_ps_uninstaller(
     config_file: Path,
 ) -> str:
     cleanup_artifact_root = cmd_escape(artifact_root)
+    cleanup_scripts_root = cmd_escape(artifact_root / "scripts")
+    cleanup_helper_package = cmd_escape(artifact_root / "scripts" / "double_sdd")
+    cleanup_scripts_pycache = cmd_escape(artifact_root / "scripts" / "__pycache__")
+    cleanup_codex_home = cmd_escape(artifact_root / "codex-home")
+    cleanup_codex = cmd_escape(artifact_root / "codex")
+    cleanup_codex_cmd = cmd_escape(artifact_root / "codex.cmd")
+    cleanup_codex_ps1 = cmd_escape(artifact_root / "codex.ps1")
+    cleanup_uninstall = cmd_escape(artifact_root / "uninstall")
+    cleanup_uninstall_cmd = cmd_escape(artifact_root / "uninstall.cmd")
+    cleanup_uninstall_ps1 = cmd_escape(artifact_root / "uninstall.ps1")
     return textwrap.dedent(
         f"""\
         Set-StrictMode -Version Latest
@@ -607,7 +664,7 @@ def build_ps_uninstaller(
                     continue
                 }}
 
-                $items = Get-ChildItem -LiteralPath $path -Force -ErrorAction SilentlyContinue
+                $items = @(Get-ChildItem -LiteralPath $path -Force -ErrorAction SilentlyContinue)
                 if ($items.Count -gt 0) {{
                     break
                 }}
@@ -666,7 +723,20 @@ def build_ps_uninstaller(
         Write-Host "Removing project-local double-SDD helpers from $ArtifactRoot"
 
         $cleanupPath = Join-Path ([System.IO.Path]::GetTempPath()) ("double-sdd-uninstall-" + [Guid]::NewGuid().ToString() + ".cmd")
-        $cleanupContent = "@echo off`r`nping 127.0.0.1 -n 2 >nul`r`nrmdir /s /q ""{cleanup_artifact_root}""`r`ndel ""%~f0""`r`n"
+        $cleanupContent = "@echo off`r`n" +
+            "ping 127.0.0.1 -n 2 >nul`r`n" +
+            "rmdir /s /q ""{cleanup_helper_package}"" 2>nul`r`n" +
+            "rmdir /s /q ""{cleanup_scripts_pycache}"" 2>nul`r`n" +
+            "rmdir ""{cleanup_scripts_root}"" 2>nul`r`n" +
+            "rmdir /s /q ""{cleanup_codex_home}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_codex}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_codex_cmd}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_codex_ps1}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_uninstall}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_uninstall_cmd}"" 2>nul`r`n" +
+            "del /f /q ""{cleanup_uninstall_ps1}"" 2>nul`r`n" +
+            "rmdir ""{cleanup_artifact_root}"" 2>nul`r`n" +
+            "del ""%~f0""`r`n"
         Write-Utf8File -Path $cleanupPath -Content $cleanupContent
 
         Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $cleanupPath -WindowStyle Hidden | Out-Null
@@ -766,6 +836,7 @@ def cleanup_project_artifact_root(artifact_root: Path) -> None:
         "uninstall.ps1",
     ]:
         remove_path(artifact_root / child_name)
+    cleanup_runtime_helper_package(artifact_root)
 
 
 def install_project(
@@ -787,6 +858,7 @@ def install_project(
         render_codex_bundle(repo_root, staging_root, project_root)
         install_rendered_bundle(staging_root, skills_root, agents_root, config_file)
 
+    install_runtime_helpers(repo_root, artifact_root)
     write_project_helpers(project_root, artifact_root, skills_root, agents_root, config_file)
     ensure_git_exclude(project_root, artifact_root)
 
@@ -815,7 +887,8 @@ def uninstall_project(
     prune_empty_directories(skills_root, project_root)
     prune_empty_directories(agents_root, project_root)
     cleanup_project_artifact_root(artifact_root)
-    remove_path(artifact_root)
+    if artifact_root.is_dir() and not any(artifact_root.iterdir()):
+        remove_path(artifact_root)
 
     print(f"Removed project Codex skills from {skills_root}")
     print(f"Removed project Codex subagents from {agents_root}")

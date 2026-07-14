@@ -52,31 +52,33 @@ The metadata file is UTF-8 JSON runtime workflow state and must not be committed
 
 ### Setup Script
 
-Executable setup lives in `scripts/double_sdd/setup_worktree.py`. The skill owns workflow policy; the script owns concrete filesystem, metadata, and git-worktree mechanics.
+Executable setup lives in an installed `scripts/double_sdd/` helper package. Project-local installs create `.double-sdd/scripts/double_sdd/setup_worktree.py` in the project root. Global installs create `~/.double-sdd/scripts/double_sdd/setup_worktree.py`. The skill owns workflow policy; the script owns concrete filesystem, metadata, and git-worktree mechanics.
 
 Run these setup command examples from the repository root of the original main worktree.
+
+For project-local installs, use the project-local helper path shown below. For global installs, replace `.double-sdd/scripts/double_sdd/setup_worktree.py` with `~/.double-sdd/scripts/double_sdd/setup_worktree.py`.
 
 Upstream metadata-path mode:
 
 ```powershell
-python scripts/double_sdd/setup_worktree.py --branch <feature-branch> --metadata-path .worktrees/<run-id>.metadata.json
+python .double-sdd/scripts/double_sdd/setup_worktree.py --branch <feature-branch> --metadata-path .worktrees/<run-id>.metadata.json
 ```
 
 Automatic upstream candidate lookup mode:
 
 ```powershell
-python scripts/double_sdd/setup_worktree.py --branch <feature-branch>
+python .double-sdd/scripts/double_sdd/setup_worktree.py --branch <feature-branch>
 ```
 
 Direct/manual no-upstream mode:
 
 ```powershell
-python scripts/double_sdd/setup_worktree.py --branch <feature-branch> --no-upstream-metadata --run-id <filesystem-safe-run-id>
+python .double-sdd/scripts/double_sdd/setup_worktree.py --branch <feature-branch> --no-upstream-metadata --run-id <filesystem-safe-run-id>
 ```
 
 On success, the script prints JSON containing `metadataPath`, `worktreePath`, and `featureBranch`. Because the script cannot change the caller's directory, subsequent commands and subagent dispatches must run from or explicitly use the printed `worktreePath`.
 
-Detailed executable behavior is implemented and tested in `scripts/double_sdd/`; this skill remains authoritative for workflow policy.
+Detailed executable behavior is implemented and tested in the installed helper package; this skill remains authoritative for workflow policy.
 
 ### Setup Safety And Lifecycle Checklist
 
