@@ -177,7 +177,7 @@ Compatibility posture must cover:
 - Lead with your recommendation and explain why.
 - Cover the level of detail the work actually needs: architecture, components, data flow, error handling, and testing.
 - When code changes are expected, capture exception behavior deliberately in the generated spec. Name failure boundaries clearly, require new exception throwing to have semantic, diagnostic, or recovery value, and disallow overdefensive broad catching unless the boundary and justification are explicit.
-- When code changes are expected, capture global state decisions deliberately in the generated spec. Prefer class or instance scope when that is enough. If a global constant is necessary, place it under an appropriate `consts` directory following project conventions.
+- When code changes are expected, capture global state decisions deliberately in the generated spec. Prefer class or instance scope when that is enough. Prohibit single-use module-level constants except for stable boundary cases: external protocols, file formats, environment variable names, CLI/API contracts, schema fields, or serialized or externally visible status values/codes. Allowed single-use exceptions may remain module-local when that stable boundary is local to the module. Constants needing stable reference across tests, docs, or multiple modules should go under an appropriate `consts` directory following project conventions. Otherwise use a local variable or inline literal.
 - Design smaller units with clear responsibilities and interfaces.
 - Follow existing codebase patterns unless the work requires targeted structural improvement.
 - Do not introduce unrelated refactors.
@@ -191,7 +191,7 @@ Compatibility posture must cover:
   - `Protected surfaces: [...]`
   - `Allowed breakage: [...]`
   - `Migration strategy: none | compatibility layer | migration script | deprecation window | other`
-- When code changes are expected, include constraints for meaningful exception throwing and cautious global state so `writing-plans` can turn them into concrete implementation and review steps.
+- When code changes are expected, include constraints for meaningful exception throwing and cautious global state, including the single-use module-level constant rule, so `writing-plans` can turn them into concrete implementation and review steps.
 - For exception constraints, state where failures should be handled, propagated, or normalized, and call out unjustified broad catches, silent fallback, and duplicate defensive wrapping as disallowed.
 - Do not hide unresolved questions behind `TBD`, `later`, or vague wording.
 - If writing the spec exposes a new unresolved product decision, constraint, edge case, or compatibility question, stop and ask the user before continuing.

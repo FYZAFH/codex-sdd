@@ -1,53 +1,71 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete or a development branch needs safe closure, and you need to decide whether to merge, create a PR, retain, or discard work while test-gating completion paths
+description: Use when implementation is complete or a development branch needs safe closure, and you need to apply changes back as uncommitted local changes, retain the branch, or discard work while test-gating completion paths
 ---
 
 # Finishing a Development Branch
 
 ## Overview
 
-Guide completion or safe closure of development work by presenting clear options and handling the chosen workflow.
+Guide completion or safe closure of development work by presenting clear local-only options and handling the chosen workflow.
 
-**Core principle:** Verify tests → test-gate merge/PR/final-storage paths → resolve metadata → present allowed options → execute choice → clean up.
+**Core principle:** Verify tests -> resolve metadata -> present allowed local-only options -> apply uncommitted changes, keep, or discard -> update metadata only after delivery -> clean up.
+
+Normal completion applies the task result to the original main worktree as uncommitted file changes. It must not create commits, integrate branches, update remotes, or open PRs as part of finishing. If the user wants any of those actions, they can do them manually after the changes are present in the original main worktree.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
 ## The Process
 
-### Retained-Cleanup Entry Path
+### Completed Cleanup Recovery Entry Path
 
-If the user explicitly requests retained PR worktree cleanup from an earlier Option 2 run and provides the exact metadata path, enter the retained-cleanup entry path instead of the normal top-level finishing flow. In this retained-cleanup entry path, validate the exact metadata path and retained cleanup metadata using the Step 2 retained cleanup rules, then proceed directly to Step 7 cleanup only.
+If the user explicitly requests cleanup for metadata that is already `status: completed` and provides the exact metadata path, enter the completed cleanup recovery entry path instead of the normal top-level finishing flow. This single entry path covers legacy retained PR worktree cleanup and completed Option 1 apply-back cleanup. It is keyed by the exact user-provided metadata path and metadata `status: completed`; automatic metadata matching must not enter it.
 
-For this retained-cleanup entry path, skip Step 1 test verification and skip Steps 4-6 option presentation/execution. Do not allow merge, push, PR creation, discard, clean-history preparation, or final local storage from this entry. If retained cleanup metadata validation fails, stop and ask the user instead of falling back to normal finishing or automatic metadata matching.
+Before Step 7, require an explicit user branch action for the completed cleanup recovery:
+- Preserve the branch after worktree cleanup. This is the retained/legacy behavior and forbids branch deletion.
+- Delete the temporary branch after completed apply-back. This is allowed only when the user explicitly confirms Option 1 apply-back already delivered the final contents.
+
+When branch deletion is selected and `git worktree list --porcelain` shows the target worktree is already absent, require the exact previously reported pre-removal branch identity token before deleting the branch. If that token is unavailable or mismatched, preserve the branch and limit recovery to non-deleting cleanup only.
+
+For this completed cleanup recovery path, skip Step 1 test verification and skip Steps 4-6 option presentation/execution. Do not run or re-run apply-back, do not discard work, and do not allow publication, history rewriting, or metadata status changes from this entry. If completed cleanup recovery metadata validation or explicit branch-action selection fails, stop and ask the user instead of falling back to normal finishing or automatic metadata matching.
 
 ### Abandoned Discard Cleanup Recovery Entry Path
 
-If the user explicitly requests abandoned discard cleanup recovery from a previously confirmed Option 4 discard and provides the exact metadata path, enter the abandoned discard cleanup recovery entry path instead of the normal top-level finishing flow. In this abandoned cleanup recovery path, validate the exact metadata path and abandoned cleanup metadata using the Step 2 abandoned cleanup recovery rules, then proceed directly to Step 7 cleanup only.
+If the user explicitly requests abandoned discard cleanup recovery from a previously confirmed discard and provides the exact metadata path, enter the abandoned discard cleanup recovery entry path instead of the normal top-level finishing flow. In this abandoned cleanup recovery path, validate the exact metadata path and abandoned cleanup metadata using the Step 2 abandoned cleanup recovery rules, then proceed directly to Step 7 cleanup only.
 
-For this abandoned cleanup recovery path, skip Step 1 test verification and skip Steps 4-6 option presentation/execution. Do not allow merge, push, PR creation, a new discard decision, clean-history preparation, or final local storage from this entry. If abandoned cleanup recovery metadata validation fails, stop and ask the user instead of falling back to normal finishing or automatic metadata matching.
+For this abandoned cleanup recovery path, skip Step 1 test verification and skip Steps 4-6 option presentation/execution. Do not allow apply-back, a new discard decision, publication, history rewriting, or metadata status changes from this entry. If abandoned cleanup recovery metadata validation fails, stop and ask the user instead of falling back to normal finishing or automatic metadata matching.
+
+### No-Metadata Cleanup Recovery Entry Path
+
+If the user explicitly requests cleanup recovery for a previously started no-metadata cleanup and provides exact recorded no-metadata cleanup evidence, enter the no-metadata cleanup recovery entry path instead of the normal top-level finishing flow. This entry covers only partial no-metadata Option 1 cleanup after tracked apply-back and all approved file copies already succeeded, or partial no-metadata discard cleanup after the exact typed `discard` confirmation already happened. It must not be entered from automatic branch/worktree discovery.
+
+For this no-metadata cleanup recovery path, skip Step 1 test verification, skip Step 3 current-branch/current-worktree discovery, and skip Steps 4-6 option presentation/execution. Do not ask for an apply-back destination or diff base, do not run or re-run apply-back, do not create a new discard decision, and do not guess the target branch or target worktree after the feature worktree is gone.
+
+Require exact recorded evidence before resuming Step 7 cleanup:
+- The prior no-metadata cleanup flow: Option 1 after successful apply-back, or Option 3 discard after exact typed `discard`.
+- For prior no-metadata Option 1, a valid pre-cleanup handoff captured after apply-back/file copies and before Step 7 cleanup starts: prior flow `Option 1`, successful tracked apply-back, successful approved file copies for all approved untracked or ignored files, exact cleanup checkout path and cleanup checkout branch, feature branch, feature worktree path, feature branch tip, pre-removal branch identity token from the feature worktree `HEAD`, and any unavailable branch identity token state.
+- Exact `<feature-branch>` and exact `<feature-worktree-path>`.
+- Exact cleanup checkout path and cleanup checkout branch used or recorded for safe cleanup.
+- The pre-removal branch identity token captured from the feature worktree `HEAD`.
+- The local `refs/heads/<feature-branch>` tip captured before removal.
+- Separate cleanup-state/failure evidence captured during or after the prior cleanup attempt: whether worktree removal succeeded, whether branch deletion remains, whether forced worktree removal was explicitly accepted during cleanup, and whether branch deletion was explicitly confirmed during cleanup before failure.
+
+Validate the recorded cleanup checkout before any remaining cleanup: it must be the exact recorded cleanup checkout path/branch, it must not be inside `<feature-worktree-path>`, it must not be attached to `refs/heads/<feature-branch>`, and it must have no active merge, rebase, cherry-pick, or bisect. Validate branch/worktree identity from the evidence before deletion: if the target worktree still exists, `git worktree list --porcelain` must show the exact `<feature-worktree-path>` attached to `refs/heads/<feature-branch>`, the target worktree `HEAD` must match the recorded pre-removal branch identity token, and the current local `refs/heads/<feature-branch>` tip must match that same token. If the target worktree is already absent, porcelain output must have no record for the exact `<feature-worktree-path>`, and the current local branch tip must still match the recorded pre-removal branch identity token before any branch deletion. If any required identity token is unavailable, mismatched, or cannot be validated, stop and preserve the branch; do not delete by name alone.
+
+No-metadata recovery may complete only the remaining validated worktree removal and branch-deletion cleanup. For no-metadata Option 1 recovery, branch deletion is allowed only if exact recovery evidence includes the valid pre-cleanup handoff plus explicit branch-deletion confirmation captured during cleanup before failure for the exact unmerged `<feature-branch>`. For no-metadata discard recovery, the exact typed `discard` confirmation is not enough for branch deletion; branch deletion is allowed only if exact cleanup evidence also records the additional explicit force branch deletion confirmation captured before the branch deletion attempt. If the recorded confirmation is absent, preserve the branch.
 
 ### Step 1: Verify Tests
 
 **Before presenting completion options, verify tests pass:**
 
 ```bash
-# Run project's test suite
+# Run the project's test suite
 npm test / cargo test / pytest / go test ./...
 ```
 
-**If tests fail:**
-```
-Tests failing (<N> failures). Must fix before completing:
+If tests fail, completion is unavailable. Continue to Step 2 only far enough to resolve metadata and present or execute cleanup-safe non-completion choices. Do not apply changes back to the destination worktree and do not transition metadata to `completed` until tests pass. Discard remains reachable only after all discard prechecks, exact typed discard confirmation, active-operation guards, metadata `abandoned` transition rules, and exact-path recovery rules.
 
-[Show failures]
-
-Cannot proceed with merge, push/PR, final local storage, final local commit(s), or metadata `completed` transition until tests pass.
-```
-
-Continue to Step 2 only far enough to resolve metadata and present or execute cleanup-safe non-completion choices. When tests fail, this skill allows only the restricted keep-as-is/preserve flow and Option 4 discard. Do not allow Option 1 merge, Option 2 push/PR, clean-history preparation, user-approved final local storage, final local commit(s), or metadata `completed` transition while tests fail. Option 4 discard remains reachable after all existing discard prechecks, exact typed discard confirmation, active-operation guards, metadata `abandoned` transition rules, and exact-path recovery rules.
-
-**If tests pass:** Continue to Step 2 with completion paths available.
+**If tests pass:** Continue to Step 2 with apply-back completion available.
 
 ### Step 2: Recorded-Base Metadata and Base Branch Authority
 
@@ -66,16 +84,17 @@ Automatic matching must use this per-candidate safety sequence before any JSON r
 8. Candidates failing any path-contract, `lstat`, reparse/junction/symlink, or containment check stop the flow immediately before JSON read; do not ignore them and do not let them participate in matching.
 9. After safe candidate validation and JSON parsing, ignore `completed` and `abandoned` metadata during active automatic matching.
 
-If the user explicitly asks to clean up a retained PR worktree from an earlier Option 2 run and provides an exact metadata path, treat that as retained PR worktree cleanup re-entry. This is a Step 7-only cleanup mode. After exact metadata validation for retained cleanup, exit the normal top-level flow and proceed directly to Step 7 cleanup only. Do not use automatic metadata matching for this mode, and do not proceed to merge, push, PR creation, discard, clean-history preparation, or final local storage from the non-attached checkout.
+If the user explicitly asks to clean up already completed metadata and provides an exact metadata path, treat that as completed cleanup recovery re-entry. This is a Step 7-only cleanup mode. After exact metadata validation and explicit branch-action selection, exit the normal top-level flow and proceed directly to Step 7 cleanup only. Do not use automatic metadata matching for this mode, and do not proceed to apply-back, a new apply-back decision, discard, publication, history rewriting, or metadata status changes from the non-attached checkout.
 
-If the user explicitly asks for abandoned discard cleanup recovery from a previously confirmed Option 4 discard and provides an exact metadata path, treat that as abandoned discard cleanup recovery re-entry. This is a Step 7-only cleanup mode. After exact metadata validation for abandoned cleanup recovery, exit the normal top-level flow and proceed directly to Step 7 cleanup only. Do not use automatic metadata matching for this mode, and do not proceed to merge, push, PR creation, a new discard decision, clean-history preparation, or final local storage from the non-attached checkout.
+If the user explicitly asks for abandoned discard cleanup recovery from a previously confirmed discard and provides an exact metadata path, treat that as abandoned discard cleanup recovery re-entry. This is a Step 7-only cleanup mode. After exact metadata validation for abandoned cleanup recovery, exit the normal top-level flow and proceed directly to Step 7 cleanup only. Do not use automatic metadata matching for this mode, and do not proceed to apply-back, a new discard decision, publication, history rewriting, or metadata status changes from the non-attached checkout.
 
 Metadata lookup outcomes are authoritative:
 - If zero active metadata files match the current branch or worktree, stop and ask the user to provide the exact metadata path or confirm this is an ordinary non-SDD branch with no recorded-base metadata expected. Do not guess and do not silently bypass cleanup for a possible SDD branch.
 - If exactly one active metadata file matches, validate and use it.
 - If more than one active metadata file matches, stop and ask the user which metadata file applies.
 - If the orchestrator provided an explicit metadata path and that metadata is missing, malformed, invalid, stale, or mismatched, stop and ask the user instead of falling back to no metadata.
-- In retained PR worktree cleanup re-entry, if the exact user-provided metadata path is missing, malformed, invalid, stale, or does not identify the retained target worktree and branch, stop and ask the user instead of falling back to no metadata.
+- In completed cleanup recovery re-entry, if the exact user-provided metadata path is missing, malformed, invalid, stale, or does not identify the completed target worktree and branch or verified absence state, stop and ask the user instead of falling back to no metadata.
+- In completed cleanup recovery re-entry, if the user has not explicitly selected whether to preserve the branch or delete the temporary branch after completed apply-back, stop and ask the user instead of inferring branch deletion from metadata.
 - In abandoned discard cleanup recovery re-entry, if the exact user-provided metadata path is missing, malformed, invalid, stale, or does not identify the abandoned target worktree and branch or verified absence state, stop and ask the user instead of falling back to no metadata.
 
 #### Consumer Metadata Validation
@@ -95,16 +114,16 @@ Validate the JSON payload before using operational fields:
 - `runId` must match the filename run id.
 - `metadataPath` must be a string that exactly matches the repo-relative path of the file being read.
 - In normal finishing mode, `status` must remain string `active`; stop on `completed`, `abandoned`, missing, or any other stale status.
-- In retained PR worktree cleanup re-entry, the exact user-provided metadata path is retained cleanup context, not an active automatic lookup. `status` must be `completed`; stop on `active`, `abandoned`, missing, or any other stale status.
+- In completed cleanup recovery re-entry, the exact user-provided metadata path is completed cleanup context, not an active automatic lookup. `status` must be `completed`; stop on `active`, `abandoned`, missing, or any other stale status.
 - In abandoned discard cleanup recovery re-entry, the exact user-provided metadata path is abandoned cleanup recovery context, not an active automatic lookup. `status` must be `abandoned`; stop on `active`, `completed`, missing, or any other stale status.
 - `mainBranch`, `mainBase`, `featureBranch`, and `worktreePath` must be present with valid types.
 - `mainBranch` and `featureBranch` must be non-empty strings naming branches.
 - `mainBase` must be a 40-character hexadecimal commit id that resolves in this repository.
-- In normal finishing mode, after `mainBase` resolves, verify it is an ancestor of the current feature `HEAD` before using it as the cleanup anchor, for example with `git merge-base --is-ancestor <mainBase> HEAD`. Also confirm the merge-base between `mainBase` and the current feature `HEAD` is `mainBase`, so the metadata is consistent with the current run branch lineage. If either check fails, stop because the metadata is stale or mismatched.
-- In retained PR worktree cleanup re-entry, do not use the current checkout `HEAD` as the feature lineage check. Validate the retained target worktree and branch from `git worktree list --porcelain` instead, then allow only Step 7 cleanup.
+- In normal finishing mode, after `mainBase` resolves, verify it is an ancestor of the current feature `HEAD` and that the merge base between `mainBase` and the current feature `HEAD` is exactly `mainBase`. If either check fails, stop because the metadata is stale or mismatched.
+- In completed cleanup recovery re-entry, do not use the current checkout `HEAD` as the feature lineage check. Validate the completed target worktree and branch from `git worktree list --porcelain`, or validate the exact target worktree's absence from that output when recovering after worktree removal already happened, then allow only Step 7 cleanup.
 - In abandoned discard cleanup recovery re-entry, do not use the current checkout `HEAD` as the feature lineage check. Validate the abandoned target worktree and branch from `git worktree list --porcelain`, or validate the exact target worktree's absence from that output when recovering after worktree removal already happened, then allow only Step 7 cleanup.
 - `worktreePath` must be a non-empty repo-relative string when metadata is being used for finishing. Reject `null`, empty strings, absolute paths, drive-prefixed paths, paths containing `..`, and paths outside the repo-local `.worktrees` directory under the shared checkout root.
-- Resolve `worktreePath` from the shared checkout root and confirm the final normalized path remains under the repo-local `.worktrees` directory. In normal finishing mode, compare that final path with the current linked worktree path from `git rev-parse --show-toplevel` or an equivalent current-checkout top-level query. In retained PR worktree cleanup re-entry, compare that final path with the target worktree path recorded by `git worktree list --porcelain`. In abandoned discard cleanup recovery re-entry, compare that final path with the target worktree path recorded by `git worktree list --porcelain`, or confirm the porcelain output has no record for that exact normalized path before treating worktree removal as already completed. On Windows, perform final absolute-path comparisons case-insensitively.
+- Resolve `worktreePath` from the shared checkout root and confirm the final normalized path remains under the repo-local `.worktrees` directory. In normal finishing mode, compare that final path with the current linked worktree path from `git rev-parse --show-toplevel` or an equivalent current-checkout top-level query. In completed cleanup recovery re-entry, compare that final path with the target worktree path recorded by `git worktree list --porcelain`, or confirm the porcelain output has no record for that exact normalized path before treating worktree removal as already completed. In abandoned discard cleanup recovery re-entry, compare that final path with the target worktree path recorded by `git worktree list --porcelain`, or confirm the porcelain output has no record for that exact normalized path before treating worktree removal as already completed. On Windows, perform final absolute-path comparisons case-insensitively.
 - `temporaryCheckpoints` must be an array when present, and `preexistingTrackedCheckpoint` must be `null` or a string when present.
 
 When metadata exists and passes validation, read:
@@ -117,46 +136,49 @@ When metadata exists and passes validation, read:
 - `metadataPath`
 - `status`
 
-Use `mainBase` as the cleanup anchor for temporary workflow commits.
+Use `mainBase` as the recorded diff anchor for task extraction and cleanup validation.
 
-When `preexistingTrackedCheckpoint` is non-null, treat that checkpoint as user pre-existing tracked state, not as task work or an ordinary temporary checkpoint. Before any final clean commit, merge, push, PR creation, or final local storage, run checkpoint-aware cleanup:
+When `preexistingTrackedCheckpoint` is non-null, treat that checkpoint as user pre-existing tracked state, not as task work or an ordinary temporary checkpoint. Before apply-back:
 - Verify the checkpoint resolves in this repository and is in the lineage between `mainBase` and the current `HEAD`; if it does not resolve, is not descended from `mainBase`, or is not an ancestor of the current `HEAD`, stop and ask because the metadata no longer safely describes this branch.
 - Explain the required split: the pre-existing tracked diff is `mainBase..preexistingTrackedCheckpoint`, and the task diff is `preexistingTrackedCheckpoint..HEAD`, subject to later edits in the working tree or index.
-- Reconstruct or preserve pre-existing tracked edits separately as uncommitted tracked changes unless the user explicitly says to include them in the final task result.
-- Create, merge, push, or store locally only the task-approved clean result, not a combined `mainBase..HEAD` staged diff.
-- If the pre-existing tracked diff and task diff overlap or cannot be separated safely, stop and ask instead of creating a final commit, merge, push, PR, or final local storage.
+- Apply the task diff back separately from the pre-existing tracked diff.
+- Keep `mainBase..preexistingTrackedCheckpoint` separate from the task diff; never fold the pre-existing tracked diff into the task result, even with user approval.
+- If the pre-existing tracked diff and task diff overlap or cannot be separated safely, preserve the feature worktree and stop before apply-back.
 
-In the non-null `preexistingTrackedCheckpoint` path, a plain direct `git reset --soft <mainBase>` is always unsafe and forbidden. Direct reset to `mainBase` is valid only when `preexistingTrackedCheckpoint` is `null`. When `preexistingTrackedCheckpoint` is non-null, require checkpoint-aware separation or reconstruction using `mainBase..preexistingTrackedCheckpoint` and `preexistingTrackedCheckpoint..HEAD`; if safe separation or reconstruction is impossible, preserve the worktree and stop and ask. Do not discard the pre-existing tracked checkpoint contents, and do not let those edits be silently folded into the final task commit, merge, or PR.
+In the non-null `preexistingTrackedCheckpoint` path, a plain direct reset to `mainBase` is always unsafe and forbidden. Direct reset to `mainBase` is valid only when `preexistingTrackedCheckpoint` is `null`. When `preexistingTrackedCheckpoint` is non-null, require checkpoint-aware separation or reconstruction using `mainBase..preexistingTrackedCheckpoint` and `preexistingTrackedCheckpoint..HEAD`; if safe separation or reconstruction is impossible, preserve the worktree and stop and ask. Do not discard the pre-existing tracked checkpoint contents, and do not let those edits be silently folded into the task result.
 
 For normal finishing from the feature checkout, validate that the current branch is not detached. When metadata exists, validate that metadata `featureBranch` matches the current branch and that metadata `worktreePath` matches the current worktree when available. If these checks fail, stop and ask the user.
 
-For retained PR worktree cleanup re-entry, require all of the following before Step 7 cleanup:
-- The user explicitly requested cleanup of a retained PR worktree and provided the exact metadata path.
-- The current shell is in the repository but is not inside the target worktree from metadata.
-- `git worktree list --porcelain` contains a `worktree` record whose normalized path exactly matches metadata `worktreePath`.
-- That same worktree entry contains `branch refs/heads/<feature-branch>`.
+For completed cleanup recovery re-entry, require all of the following before Step 7 cleanup:
+- The user explicitly requested cleanup of already completed metadata and provided the exact metadata path.
+- The user explicitly selected one branch action: preserve the branch after worktree cleanup, or delete the temporary branch after completed apply-back.
+- If the selected action is branch deletion, the user explicitly confirms Option 1 apply-back already delivered the final contents. If the user cannot confirm delivery, preserve the branch.
+- The current shell is in the repository but is not inside the target worktree from metadata when that target still exists.
+- `git worktree list --porcelain` either contains a `worktree` record whose normalized path exactly matches metadata `worktreePath` and whose branch entry is `refs/heads/<feature-branch>`, or contains no `worktree` record for that exact normalized path when recovering after worktree removal already happened.
+- Before deleting a branch, verify the local branch ref is exactly `refs/heads/<feature-branch>`, and verify branch identity. If the target worktree still exists, the local branch tip must match that target worktree `HEAD`. If branch deletion is selected and `git worktree list --porcelain` shows the target worktree is absent, explicitly revalidate the branch tip against the exact previously reported pre-removal branch identity token from the completed cleanup failure report before deletion. If the token is unavailable, mismatched, or cannot prove identity, stop and preserve the branch, and limit recovery to non-deleting cleanup only. If the branch is already absent, report that cleanup recovery has no remaining branch deletion work. These checks are not permission to delete the branch unless the user selected the delete-temporary-branch action.
 - The active-operation guard passes for the current cleanup checkout and for the target worktree when accessible.
+- The cleanup checkout is the original/main worktree recorded by metadata `mainBranch`, or another safe non-attached checkout that is not the target feature worktree. Do not require that checkout to be clean, because completed apply-back may intentionally leave delivered changes uncommitted in the destination worktree.
 
-In this retained-cleanup mode, do not require the current branch or current worktree to match metadata `featureBranch` or `worktreePath`. Use metadata `featureBranch` and `worktreePath` only to identify the target worktree and branch for Step 7. Do not use automatic active metadata matching for retained cleanup, because completed metadata is ignored by automatic matching.
+In this completed cleanup recovery mode, do not require the current branch or current worktree to match metadata `featureBranch` or `worktreePath`. Use metadata `mainBranch`, `featureBranch`, and `worktreePath` only to identify the cleanup checkout, target worktree, and target branch for Step 7, or to verify that the target worktree is already absent. Do not use automatic active metadata matching for completed cleanup recovery, because completed metadata is ignored by automatic matching. Do not infer branch deletion from `status: completed`, and do not run apply-back again.
 
 For abandoned discard cleanup recovery re-entry, require all of the following before Step 7 cleanup:
 - The user explicitly requested cleanup recovery of a previously confirmed discard and provided the exact metadata path.
-- The user confirms the original Option 4 exact typed discard confirmation already happened, and that this entry is only to finish or remediate worktree removal and branch deletion.
+- The user confirms the original exact typed discard confirmation already happened, and that this entry is only to finish or remediate worktree removal and branch deletion.
 - The current shell is in the repository but is not inside the target worktree from metadata when that target still exists.
 - `git worktree list --porcelain` either contains a `worktree` record whose normalized path exactly matches metadata `worktreePath` and whose branch entry is `refs/heads/<feature-branch>`, or contains no `worktree` record for that exact normalized path when recovering after worktree removal already happened.
-- Before deleting a branch, verify the local branch ref is exactly `refs/heads/<feature-branch>`, or verify it is already absent when cleanup recovery has no remaining branch deletion work.
+- Before deleting a branch, verify the local branch ref is exactly `refs/heads/<feature-branch>`, and verify branch identity. If the target worktree still exists, the local branch tip must match that target worktree `HEAD`. If the target worktree is absent, explicitly revalidate the branch tip against the exact recorded pre-removal branch identity token before deletion. If the token is unavailable, mismatched, or cannot prove identity, stop and preserve the branch, and limit recovery to non-deleting cleanup only. If the branch is already absent, report that cleanup recovery has no remaining branch deletion work.
 - The active-operation guard passes for the current cleanup checkout and for the target worktree when accessible.
-- The destination checkout cleanliness guard passes for the checkout used to perform cleanup.
+- The checkout used to perform cleanup must be concrete and safe: it must not be the target feature worktree, must not be attached to `refs/heads/<feature-branch>`, must have no active merge, rebase, cherry-pick, or bisect, and if any local changes would be affected by switching or deleting, stop and ask before cleanup.
 
 In this abandoned cleanup recovery mode, do not require the current branch or current worktree to match metadata `featureBranch` or `worktreePath`. Use metadata `featureBranch` and `worktreePath` only to identify the target worktree and branch for Step 7, or to verify that the target worktree is already absent. Do not use automatic active metadata matching for abandoned cleanup recovery, because abandoned metadata is ignored by automatic matching.
 
-When validated metadata exists, the recorded `mainBranch` is authoritative. Do not heuristically choose `main`, `master`, or any other base branch after metadata is found. Use the validated recorded `mainBranch` for Options 1, 2, and 4, or stop if it is missing, invalid, unavailable, or mismatched with the intended target.
+When validated metadata exists, the recorded `mainBranch` is authoritative. Do not heuristically choose `main`, `master`, or any other destination branch after metadata is found. Use the validated recorded `mainBranch` for Option 1 apply-back and cleanup context for Options 2 and 3, or stop if it is missing, invalid, unavailable, or mismatched with the intended target.
 
-Only after the user confirms this is an ordinary non-SDD branch with no recorded-base metadata expected, keep the existing finishing behavior and state that temporary checkpoint cleanup was not applied.
+Only after the user confirms this is an ordinary non-SDD branch with no recorded-base metadata expected, proceed to Step 3. Do not guess a destination, do not silently bypass cleanup for a possible SDD branch, and do not run remote-publication or branch-integration fallbacks.
 
-### Step 3: Determine Base Branch and Remote Without Metadata
+### Step 3: Confirm Feature Context Without Metadata
 
-Only when no recorded-base metadata exists, determine the base branch from actual branch names or explicit user confirmation. Do not use `git merge-base` output as a branch-name heuristic.
+Only when no recorded-base metadata exists and the user confirms this is an ordinary non-SDD branch, determine and confirm only the current feature branch and current feature worktree from explicit local evidence before Step 4. Do not use ancestry output as a branch-name heuristic. Do not confirm the destination branch, destination worktree, or diff base before the user selects no-metadata Option 1.
 
 Before presenting options, determine the current feature branch:
 
@@ -166,77 +188,52 @@ git branch --show-current
 
 Require a single non-empty current branch name and use that exact value as `<feature-branch>`. If the output is empty because `HEAD` is detached, blank, multi-line, or otherwise ambiguous, stop and ask the user before presenting options.
 
-Use branch-name evidence such as the current branch's configured upstream, known local branch refs, known remote branch refs, or the user's explicit answer. If the evidence is ambiguous, ask the user to choose the intended `<base-branch>` before presenting merge or PR commands.
-
-#### Resolve Remote and Branch From Upstream
-
-Before branch-ref validation, fetch, push, remote-divergence checks, or PR operations, resolve `<remote>`, `<remote-branch>`, and `<upstream-short>` from the selected branch's configured upstream when one exists. The selected branch is `<base-branch>` for base branch validation and Option 1 fetch/fast-forward updates, and `<feature-branch>` for Option 2 push and remote-divergence checks.
-
-Use Git's configured upstream data instead of assuming a remote name. `%(upstream:short)` returns the full short remote-tracking ref, such as `<remote>/<branch>`, not a branch-only name. Do not concatenate it with `<remote>` again.
+Before presenting options, determine and confirm the current no-metadata feature worktree path:
 
 ```bash
-git for-each-ref --format='%(upstream:remotename)' refs/heads/<selected-branch>
-git for-each-ref --format='%(upstream:short)' refs/heads/<selected-branch>
-git config --get branch.<selected-branch>.merge
+git rev-parse --show-toplevel
 ```
 
-If the selected branch has an upstream:
-- Use `%(upstream:remotename)` as `<remote>`.
-- Use `%(upstream:short)` as `<upstream-short>` for local remote-tracking refs, for example `refs/remotes/<upstream-short>`.
-- Derive `<remote-branch>` from `branch.<selected-branch>.merge` by requiring a `refs/heads/<remote-branch>` value and stripping only the `refs/heads/` prefix.
+Require a single normalized checkout path and use it as `<feature-worktree-path>`. If the worktree path is unavailable or ambiguous, stop and ask the user before presenting options.
 
-If no upstream or remote is configured, keep a documented local-only path for actions that do not require network access, or ask the user to choose and confirm a remote before any fetch, push, remote-divergence check, or PR operation. Any fallback remote must require explicit confirmation; do not default to any remote name.
+For no-metadata tests-passing flows, do not confirm the destination branch, destination worktree, or diff base before Step 4. In the Step 4 prompt, treat `<main-branch>` as the prompt placeholder until Option 1 is selected. The actual destination branch/worktree and diff base are confirmed only after no-metadata Option 1 is selected and before applying changes.
 
-Before using `<base-branch>` in `git switch`, require it to resolve to a local branch ref:
+For no-metadata tests-failing flows, do not require a destination branch, destination worktree, or diff base before presenting the tests-failing prompt. Option 2 keep-as-is and Option 3 discard need only the minimum no-metadata feature branch/worktree context for the chosen action.
 
-```bash
-git show-ref --verify --quiet refs/heads/<base-branch>
-```
-
-Before using `<pr-base>` in `gh pr create --base`, require the requested or user-confirmed PR base branch itself to resolve. Do not let an unrelated selected branch upstream satisfy PR base validation.
-
-```bash
-git show-ref --verify --quiet refs/heads/<pr-base>
-
-# Or, when the PR base is confirmed to live on a specific remote-tracking branch:
-git show-ref --verify --quiet refs/remotes/<pr-base-remote>/<pr-base-remote-branch>
-```
-
-For remote-tracking validation, `<pr-base-remote>/<pr-base-remote-branch>` must be the explicit remote-tracking ref for the same PR base branch the user requested or confirmed. If the branch name passed to `gh pr create --base <pr-base>` differs from `<pr-base-remote-branch>`, require explicit confirmation of that PR target before continuing. If the chosen PR base does not resolve to the required local or matching remote-tracking branch ref, stop and ask the user for a valid PR base instead of guessing.
+Do not run remote publication, branch integration, or PR-opening steps from the no-metadata path. The only normal no-metadata choices are the same local-only choices in Step 4.
 
 ### Step 4: Present Options
 
-If tests pass, present exactly these 4 options:
+If tests pass, present exactly the prompt below with literal `<main-branch>` in all tests-passing cases. Do not substitute a destination branch in this prompt. Actual destination branch and worktree validation happens only after Option 1 is selected.
 
-```
+```text
 Implementation complete. What would you like to do?
 
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+1. Apply changes to <main-branch> as uncommitted local changes
+2. Keep the branch as-is
+3. Discard this work
 
 Which option?
 ```
 
-If tests fail, do not present or execute completion paths. Present only cleanup-safe non-completion choices, preserving the existing option identities:
+If tests fail, completion is unavailable. Present only:
 
-```
+```text
 Tests are still failing. What would you like to do?
 
-3. Keep the branch as-is (no final local storage)
-4. Discard this work
+2. Keep the branch as-is
+3. Discard this work
 
 Which option?
 ```
 
 **Don't add explanation** - keep options concise.
 
-### Step 5: Mandatory Active-Operation Guard and Clean-History Preparation
+### Step 5: Apply-Back Preparation and Guards
 
-Before executing Option 1, Option 2, Option 4, or any final local storage path, always confirm no merge, rebase, cherry-pick, or bisect is active, regardless of whether recorded-base metadata exists. This includes Option 3 when the user explicitly requests final local storage or user-approved final local commit(s). This active-operation guard applies to the source feature checkout and to any destination checkout used for local merge, cleanup, branch deletion, worktree removal, or final local storage. When the target linked worktree is accessible, check that target worktree too before removing it or deleting its branch.
+Before executing Option 1 apply-back, Option 3 discard, branch deletion, or worktree removal, always confirm no merge, rebase, cherry-pick, or bisect is active. For Option 1, this active-operation guard applies to the source feature checkout and to the destination original main worktree or user-confirmed no-metadata destination checkout. For Option 3 and cleanup recovery, it applies to the cleanup checkout and to the target feature worktree when that target is accessible.
 
-For each checkout being used or affected, inspect the checkout-specific git paths for active operations, for example:
+For each checkout being used or affected, inspect the checkout-specific Git paths for active operations, for example:
 
 ```bash
 git rev-parse --git-path MERGE_HEAD
@@ -246,188 +243,141 @@ git rev-parse --git-path CHERRY_PICK_HEAD
 git rev-parse --git-path BISECT_LOG
 ```
 
-After resolving these checkout-specific git paths, explicitly check whether each returned marker file or directory exists, for example with `Test-Path -LiteralPath <resolved-path>` on PowerShell, `[ -e "<resolved-path>" ]` in POSIX shell, or an equivalent Git state check. Any existing marker means a merge, rebase, cherry-pick, or bisect is active; stop and ask the user before cleanup, merge, push, PR creation, discard cleanup, branch deletion, or worktree removal. Do not continue through a no-metadata fallback path while a merge, rebase, cherry-pick, or bisect is active.
+After resolving these checkout-specific Git paths, explicitly check whether each returned marker file or directory exists, for example with `Test-Path -LiteralPath <resolved-path>` on PowerShell, `[ -e "<resolved-path>" ]` in POSIX shell, or an equivalent Git state check. Any existing marker means an active operation is present; stop and ask the user before apply-back, discard cleanup, branch deletion, or worktree removal. Do not continue through a no-metadata fallback path while an active operation is present.
 
-Before using any destination checkout for `git switch`, fetch/merge, final local storage, branch deletion, or worktree removal, explicitly confirm that destination checkout has a clean worktree and clean index. This destination checkout cleanliness guard is additional to the active-operation guard and applies even when recorded-base metadata does not exist.
+Run non-destructive cleanup preflight only before Option 1 apply-back, after Option 1 is selected and after any required no-metadata destination worktree and diff-base confirmation:
+- Identify the exact feature worktree and feature branch from validated metadata or user-confirmed no-metadata evidence.
+- Identify the destination original main worktree and destination branch.
+- Confirm the current shell is not inside the target feature worktree.
+- Confirm no active operation is present in the feature checkout or destination checkout.
+- If cleanup preflight fails, stop before apply-back, preserve the feature worktree, and leave metadata active.
 
-If dirty or staged local changes exist in a destination checkout and the user has not explicitly approved how to handle those exact local changes, stop and ask before continuing. Do not mix unrelated destination checkout changes into merge, discard, branch deletion, worktree removal, or final local storage flows. If the user approves a handling path, keep that approval scoped to the named checkout, paths, and operation.
+For Option 2 keep-as-is and Option 3 discard, do not ask for a no-metadata apply-back destination or diff base. Use only the feature branch/worktree context plus the active-operation and cleanup-checkout evidence needed for the chosen action.
 
-Run the remaining clean-history preparation before any merge, push, PR creation, or final local storage when recorded-base metadata exists.
+Before applying the task diff to the destination checkout during Option 1:
+- Validate that the destination checkout is the recorded `mainBranch` and the original non-attached main worktree when metadata exists. For no-metadata finishing, validate that it is the user-confirmed destination branch/worktree. The destination must not be the feature linked worktree.
+- Require a clean destination index by default. If the destination has staged changes, stop unless the user explicitly approves handling those exact staged paths and the task diff does not modify them.
+- Preserve destination tracked worktree modifications. Apply-back may proceed only when Git can apply the task patch cleanly without overwriting those modifications. If the task patch touches the same file as a destination tracked modification, require a clean patch check and stop on any conflict.
+- Preserve destination untracked files. If a task-created path already exists as an untracked destination path, stop and ask the user to move it, delete it, or keep the feature worktree.
+- Preserve destination ignored files. If a task-created path already exists as an ignored destination path, stop and ask the user to move it, delete it, or keep the feature worktree.
+- Refuse to copy any untracked or ignored feature file over an existing destination tracked, untracked, or ignored path.
+- Stop and preserve the feature worktree if apply-back cannot be completed safely.
 
-Require a clean commit for any final git storage:
-- Explain that final git storage requires a clean commit built from the final file state, with temporary checkpoints removed from branch history.
-- Ask the user before creating that final local commit.
-- If the user does not approve the final local commit or final git storage, do not merge, push, or create a PR. After the active-operation guard passes and after explaining the concrete cleanup operation, remove temporary workflow commits from branch history with a content-preserving cleanup anchored at metadata `mainBase`, preserving the final tracked file contents in the worktree and index as uncommitted changes. Report that the work remains uncommitted because the final local commit was declined.
-- The declined-final-commit path is not a partial-success state and must not preserve temporary workflow checkpoints merely because the final local commit was declined.
-- If the declined-final-commit cleanup would rewrite permanent or user-approved commits, ask before rewriting them.
-- If the user approves the final local commit, final history should contain only approved final commit(s), not intermediate temporary checkpoints.
-- If the user has already approved specific permanent commits, do not rewrite them without asking.
+Before Option 1 cleanup can be reached, enumerate all dirty/staged tracked files in the feature worktree. Each dirty/staged tracked path must be included in the delivered result or explicitly approved for deletion/loss from the source worktree; stop if any tracked change is unresolved.
 
-Prefer a content-preserving soft reset or squash-style cleanup from metadata `mainBase` only when that cleanup preserves the checkpoint split described above. Do not recommend destructive reset, checkout, clean, or unconditional force deletion. Before running cleanup, explain the concrete operation for the current state.
+Determine the tracked task diff before apply-back:
+- With `preexistingTrackedCheckpoint: null`, the task diff is `mainBase..HEAD`, plus any user-approved dirty or staged tracked changes in the feature worktree. If temporary workflow commits will be removed in the feature worktree, capture the task diff or otherwise verify it is recoverable before that cleanup.
+- With a non-null `preexistingTrackedCheckpoint`, the pre-existing tracked diff is `mainBase..preexistingTrackedCheckpoint`; the task diff is `preexistingTrackedCheckpoint..HEAD`, plus any user-approved dirty or staged tracked changes in the feature worktree. Apply the task diff separately from the pre-existing tracked diff.
+- In the non-null checkpoint path, treat the destination main worktree's current tracked state as the user's authoritative local state. If it diverges from the recorded `mainBase..preexistingTrackedCheckpoint` diff, stop before apply-back unless the user explicitly approves treating the current destination state as authoritative and the task patch applies cleanly without overwriting those current changes.
+- Keep `mainBase..preexistingTrackedCheckpoint` separate from the task diff; never fold the pre-existing tracked diff into the task result, even when the user approves treating the current destination tracked state as authoritative.
 
-Decision rules:
-- If the current branch is detached, or metadata `featureBranch` does not match the current branch, stop and ask the user.
-- If the worktree and index are clean, no permanent commits have been approved, and `preexistingTrackedCheckpoint` is `null`, an acceptable operation is a soft reset to `mainBase`, followed by one user-approved final commit from the staged final diff.
-- If `preexistingTrackedCheckpoint` is non-null, do not use a direct soft reset to `mainBase` as the happy path. First complete the checkpoint-aware cleanup that separates `mainBase..preexistingTrackedCheckpoint` from `preexistingTrackedCheckpoint..HEAD`; preserve or reconstruct the pre-existing tracked diff separately as uncommitted changes, then commit only the task-approved result. If the diffs overlap or cannot be separated safely, stop and ask.
-- If tracked files are dirty or staged, ask whether those changes are part of the final file state. If approved and `preexistingTrackedCheckpoint` is `null`, include them in the final commit after the soft reset; if approved and `preexistingTrackedCheckpoint` is non-null, include only the task-approved portion after checkpoint-aware cleanup; if not approved, stop for user direction.
-- If new untracked files are part of the final deliverable, ask before adding them. Never add ignored files unless the user explicitly approves those exact paths.
-- Preserve final tracked contents and do not delete untracked or ignored files.
-- After cleanup, verify the final diff/content still contains the intended work before merge or push.
-- If these checks cannot be satisfied safely, preserve the worktree and stop instead of forcing cleanup.
+Account for feature worktree untracked and ignored files before apply-back:
+- Enumerate untracked files in the feature worktree before apply-back.
+- Enumerate ignored files in the feature worktree before apply-back.
+- Copy task-created untracked files to the destination only after the user approves those exact paths as part of the result.
+- Copy ignored files only after the user explicitly approves those exact ignored paths.
+- Generated caches, build outputs, and unrelated ignored files must remain excluded.
+- If an untracked or ignored feature file might be part of the result and the user has not approved inclusion or exclusion, stop and preserve the feature worktree.
+- Refuse to overwrite pre-existing tracked, untracked, or ignored destination paths.
 
-After a successful local merge, push/PR creation, or user-approved final local storage, update metadata `status` to `completed`. For options with required metadata-dependent cleanup before the workflow is considered complete, write `completed` only after those required cleanup steps succeed or after determining no cleanup re-entry is needed. Successful Option 2 PR creation still marks metadata completed even when the PR worktree is retained; do not reintroduce active metadata after successful Option 2 PR creation. If the user later asks to remove that retained PR worktree, require exact user-provided retained cleanup evidence such as the metadata path and target worktree context; do not rely on automatic active metadata matching. If cleanup or prechecks fail before a completion path succeeds, metadata must remain active so finishing can resume safely. For Option 4 discard, after exact typed discard confirmation and after all discard/removal prechecks pass, update recorded-base metadata `status` to `abandoned` immediately before irreversible worktree/branch removal when practical. If the metadata update itself cannot be performed safely, stop before removal and ask; do not remove the worktree while metadata still falsely says active if updating was practical but failed. If any discard precheck fails before the abandoned transition, leave recorded-base metadata `status` as `active` so finishing can resume safely. If worktree removal or branch deletion fails after the abandoned transition, use only exact-path abandoned discard cleanup recovery to finish or remediate cleanup; do not return to normal finishing or automatic matching. Do not delete metadata automatically unless the user asks.
+Metadata and cleanup ordering is fixed:
+- Apply the tracked task diff and copy all user-approved untracked or ignored task files first.
+- Only after tracked apply-back and all approved file copies succeed, update recorded-base metadata to `completed`.
+- After metadata is completed, run destructive cleanup commands that remove the feature worktree and feature branch through Step 7.
+- If destructive cleanup fails after metadata is completed, do not re-run apply-back. Report completed cleanup recovery instructions with the exact `metadataPath`, `featureBranch`, `worktreePath`, feature branch tip, feature worktree HEAD before removal when available, and any unavailable branch identity token; the recovery flow will require explicit branch action and branch identity proof before any branch deletion. If the token is unavailable, recovery must preserve the branch.
 
 ### Step 6: Execute Choice
 
-#### Option 1: Merge Locally
+#### Option 1: Apply Changes As Uncommitted Local Changes
 
-If recorded-base metadata exists, run Clean-History Preparation first and merge only after it succeeds. Use the validated recorded `mainBranch` as `<base-branch>`. If no metadata exists, state that temporary checkpoint cleanup was not applied and continue with the existing merge flow.
+Run tests first. If tests are still failing, Option 1 is unavailable.
 
-For linked worktrees, do not check out `<base-branch>` inside the feature linked worktree. Perform the merge from the original/main worktree or from another safe non-attached checkout that is not the current feature worktree. Confirm the destination checkout is on the validated recorded `mainBranch`, has no active merge/rebase/cherry-pick/bisect, has a clean worktree and clean index unless the user explicitly approved handling exact local changes there, and is safe to update before merging.
+Then execute the recorded-metadata or no-metadata apply-back path:
+1. Resolve and validate metadata. If no metadata exists, after Option 1 is selected require the user to confirm the actual destination branch, the destination worktree that should receive uncommitted local changes, and the diff base commit or base ref for extracting current branch changes. Do not reuse or infer a real branch from the Step 4 `<main-branch>` prompt placeholder. Stop if the destination branch, destination worktree, or diff base is ambiguous.
+2. Validate the destination checkout is the recorded `mainBranch` in the original non-attached main worktree, or the user-confirmed no-metadata destination branch/worktree. The destination must not be the feature linked worktree.
+3. Run cleanup preflight before apply-back by identifying the exact feature worktree and branch, confirming the current shell is outside that feature worktree, and confirming no active operation is present in the feature or destination checkout.
+4. Enumerate all dirty/staged tracked files in the feature worktree. Resolve each one by including it in the delivered result or by getting explicit approval for deletion/loss from the source worktree; stop if any tracked change is unresolved.
+5. Capture the tracked task diff from the validated metadata state or no-metadata base:
+   - If metadata exists and `preexistingTrackedCheckpoint` is `null`, the tracked task diff is `mainBase..HEAD`, plus any user-approved dirty or staged tracked changes in the feature worktree.
+   - If metadata exists and `preexistingTrackedCheckpoint` is non-null, the tracked task diff is `preexistingTrackedCheckpoint..HEAD`, plus any user-approved dirty or staged tracked changes in the feature worktree. The pre-existing tracked user state in `mainBase..preexistingTrackedCheckpoint` is never part of the apply-back or delivered result.
+   - For no-metadata finishing, capture the tracked task diff from the user-confirmed diff base to current `HEAD`, plus any user-approved dirty or staged tracked changes in the feature worktree.
+6. Enumerate feature worktree untracked files and ignored files before apply-back.
+7. Account for approved feature worktree untracked or ignored files while excluding generated caches, build outputs, and unrelated ignored files.
+8. Stop if inclusion or exclusion of a possibly relevant untracked or ignored file is unresolved.
+9. Dry-run the tracked patch against the destination worktree. Stop if it cannot apply cleanly or would overwrite destination changes.
+10. Apply the tracked patch to the destination worktree without committing.
+11. Copy approved untracked or ignored files without overwriting any destination tracked, untracked, or ignored path.
+12. Mark recorded-base metadata `completed` only after tracked apply-back and all approved file copies succeed. Skip this step when no metadata exists.
+13. For no-metadata Option 1, after tracked apply-back and all approved file copies succeed and before Step 7 cleanup begins, capture a pre-cleanup handoff record. The pre-cleanup handoff record must include only fields knowable at that point: prior flow `Option 1`, successful tracked apply-back, successful approved file copies for all approved untracked or ignored files, exact cleanup checkout path and branch, feature branch, feature worktree path, feature branch tip, pre-removal branch identity token from the feature worktree `HEAD`, and any unavailable branch identity token state. Keep cleanup-state/failure fields separate: whether worktree removal succeeded, whether branch deletion remains, whether forced worktree removal was explicitly accepted during cleanup, and whether branch deletion was explicitly confirmed during cleanup are recorded or reported only after those cleanup decisions or outcomes exist.
+14. Remove the feature worktree and branch through guarded cleanup in Step 7.
 
-When the selected base branch has a configured upstream, update the destination base branch with an explicit fetch and fast-forward-only update from the `<remote>`, `<remote-branch>`, and `<upstream-short>` resolved from that upstream. Use `<remote-branch>` only as the branch name fetched from the remote, and use `refs/remotes/<upstream-short>` as the local remote-tracking ref. Do not use plain `git pull`, and do not rely on config-dependent pull behavior. If the destination base branch is not a clean fast-forward to the fetched base ref, stop and ask the user before merging.
+After Option 1 succeeds, final task contents remain as uncommitted changes in the destination main worktree. Workflow temporary commits are not preserved as delivered history.
 
-```bash
-# In the original/main worktree or another safe non-attached checkout
-git switch <base-branch>
+If cleanup fails after metadata completion, report the exact `metadataPath`, `featureBranch`, `worktreePath`, feature branch tip, feature worktree HEAD before removal when available, and any unavailable branch identity token; state that apply-back already completed; and do not re-run apply-back. If the token is unavailable, recovery must preserve the branch.
 
-# Fetch and fast-forward only
-git fetch <remote> <remote-branch>:refs/remotes/<upstream-short>
-git merge --ff-only refs/remotes/<upstream-short>
-
-# Merge feature branch
-git merge <feature-branch>
-
-# Verify tests on merged result
-<test command>
-```
-
-When the selected base branch has no configured upstream, Option 1 may continue only as an explicitly local-only merge path. Validate the local `<base-branch>` ref, use the original/main worktree or another safe non-attached checkout, switch to `<base-branch>`, skip fetch and remote fast-forward, and state that no remote update was applied before merging. Push and PR creation still require an explicitly confirmed remote and must not reuse this local-only path.
-
-```bash
-# In the original/main worktree or another safe non-attached checkout
-git show-ref --verify --quiet refs/heads/<base-branch>
-git switch <base-branch>
-
-# Local-only merge: no fetch, no remote fast-forward, and no remote update applied
-git merge <feature-branch>
-
-# Verify tests on merged result
-<test command>
-```
-
-If tests pass, remove the feature worktree through Cleanup Worktree (Step 7) when it is a linked worktree attached to `<feature-branch>`. Delete `<feature-branch>` only from the original/main worktree or another safe non-attached checkout after confirming no worktree is currently attached to that branch:
-
-```bash
-git branch -d <feature-branch>
-```
-
-Then: finish Cleanup Worktree (Step 7) if it was not already needed before branch deletion.
-
-#### Option 2: Push and Create PR
-
-If recorded-base metadata exists, run Clean-History Preparation first and push/create the PR only after it succeeds. Use the validated recorded `mainBranch` as `<base-branch>` for PR creation, or stop if that recorded target is missing, unavailable, or mismatched with the intended PR base. If no metadata exists, state that temporary checkpoint cleanup was not applied and continue with the existing push/PR flow.
-
-Before pushing a cleaned branch:
-- Resolve `<remote>` from the selected feature branch's configured upstream. If no upstream exists, ask the user to choose and confirm the remote before pushing or creating a PR.
-- Refresh remote state before any divergence comparison, remote branch existence check, or new/up-to-date/fast-forward/divergent classification.
-- When an upstream exists, derive `<upstream-short>` and `<head-remote-branch>` as described in Step 3. Fetch the feature branch upstream target into the local remote-tracking ref before checking `refs/remotes/<upstream-short>` or comparing histories, for example `git fetch <remote> <head-remote-branch>:refs/remotes/<upstream-short>`. Use that same `<head-remote-branch>` for divergence checks and for the final push refspec.
-- When no upstream exists and the user confirms a remote, use only an explicit branch name such as `<feature-branch>` or another user-confirmed `<head-remote-branch>`. Fetch or otherwise verify the current remote state for the exact user-confirmed `<head-remote-branch>` before deciding whether the remote branch is new, already up to date, fast-forwardable, or divergent; do not synthesize a doubled ref from `<remote>` plus `<upstream-short>`.
-- After remote state refresh, if the remote branch exists, compare local and remote history and determine whether the push is a fast-forward, already up to date, or divergent. If the refreshed exact remote branch does not exist, treat the push as creating a new remote branch.
-- If a non-fast-forward update is needed, stop and ask for explicit approval to use `--force-with-lease` or for a new branch name.
-- Do not assume a plain push will succeed when histories diverge, and do not default to force push.
-- If `<head-remote-branch>` differs from `<feature-branch>`, require explicit user confirmation before pushing to that remote branch.
-- Resolve the PR base from the selected base branch's upstream target when known. Store that branch destination separately as `<base-remote-branch>` so it cannot be confused with the feature PR head. If the local `<base-branch>` name differs from `<base-remote-branch>` or the intended PR target branch, require explicit user confirmation and use that confirmed value as `<pr-base>`.
-- Validate that `<pr-base>` names the PR base target and `<head-remote-branch>` names the feature PR head target. Do not reuse one placeholder for both values, and stop if the user-provided values are ambiguous.
-- Treat `<head-remote-branch>` as the remote PR head after the push refspec succeeds or is validated as already up to date. Use that resolved or user-confirmed head explicitly in `gh pr create --head`; do not rely on GitHub's default head inference.
-- If GitHub requires an owner-qualified head for a cross-repo PR, stop and require the user-confirmed `<head-owner>:<head-remote-branch>` value. Do not infer the head owner from the remote URL or local configuration.
-
-PowerShell example:
-
-```powershell
-# Push branch only when it is new, fast-forward, or explicitly approved.
-# Use the resolved or user-confirmed remote branch as the destination ref.
-git push -u <remote> <feature-branch>:<head-remote-branch>
-
-$prBody = New-TemporaryFile
-@'
-## Summary
-<2-3 bullets of what changed>
-
-## Test Plan
-- [ ] <verification steps>
-'@ | Set-Content -LiteralPath $prBody -Encoding UTF8
-
-# Create PR against the resolved or user-confirmed PR base and remote head.
-# For cross-repo PRs, use a user-confirmed owner-qualified head such as <head-owner>:<head-remote-branch>.
-gh pr create --base <pr-base> --head <head-remote-branch> --title "<title>" --body-file $prBody
-Remove-Item -LiteralPath $prBody
-```
-
-POSIX shell example:
-
-```bash
-# Push branch only when it is new, fast-forward, or explicitly approved.
-# Use the resolved or user-confirmed remote branch as the destination ref.
-git push -u <remote> <feature-branch>:<head-remote-branch>
-
-pr_body_file="$(mktemp)"
-cat >"$pr_body_file" <<'EOF'
-## Summary
-<2-3 bullets of what changed>
-
-## Test Plan
-- [ ] <verification steps>
-EOF
-
-# Create PR against the resolved or user-confirmed PR base and remote head.
-# For cross-repo PRs, use a user-confirmed owner-qualified head such as <head-owner>:<head-remote-branch>.
-gh pr create --base <pr-base> --head <head-remote-branch> --title "<title>" --body-file "$pr_body_file"
-rm -f "$pr_body_file"
-```
-
-Then: Cleanup worktree (Step 7) only if the user asks to remove the worktree after PR creation. Otherwise preserve it.
-
-If recorded-base metadata exists and PR creation succeeds, update metadata `status` to `completed` even when the user preserves the PR worktree. Retained PR worktree cleanup later requires exact user-provided retained cleanup evidence such as the metadata path and target worktree context; do not use automatic active metadata matching for that later cleanup.
-
-When Option 2 completes with the PR worktree retained, provide a user-visible handoff that future retained PR cleanup is exact-path-only. Report the exact `metadataPath`, metadata `worktreePath`, and metadata `featureBranch` values from the validated metadata so the user can provide them in a future cleanup request.
-
-#### Option 3: Keep As-Is
+#### Option 2: Keep As-Is
 
 Report: "Keeping branch <name>. Worktree preserved at <path>."
 
-If recorded-base metadata exists, do not mark metadata `status` as `completed` merely because the branch is kept as-is. If the user explicitly wants final local storage instead, apply the mandatory active-operation guard first, run Clean-History Preparation, create only the user-approved final local commit(s), then mark metadata `status` as `completed`.
+If recorded-base metadata exists, do not mark metadata `status` as `completed` merely because the branch is kept as-is. Option 2 is preserve-only whether tests pass or fail: keep the branch and worktree as-is for later work, do not apply changes back, and do not run destructive cleanup.
 
-Final local storage, final local commit(s), and metadata `status` transition to `completed` are available from Option 3 only when Step 1 tests have passed. In the failed-test flow, Option 3 is preserve-only: keep the branch and worktree as-is for later work, do not run clean-history preparation, do not create final local commit(s), and do not mark metadata `status` as `completed`.
+#### Option 3: Discard
 
-**Don't cleanup worktree.**
+**Confirm first.** When recorded-base metadata exists, the task boundary is known from metadata, so use:
 
-#### Option 4: Discard
-
-**Confirm first:**
-```
+```text
 This will permanently delete:
-- Branch <name>
-- All commits: <commit-list>
-- Worktree at <path>
+- Branch <feature-branch>
+- Task commits from recorded metadata boundary: <commit-list>
+- Worktree at <worktree-path>
 
 Type 'discard' to confirm.
 ```
 
+When no recorded-base metadata exists and no explicit no-metadata discard boundary has been user-confirmed, use only known destructive targets:
+
+```text
+This will permanently delete:
+- Branch <feature-branch>
+- Worktree at <feature-worktree-path>
+
+Type 'discard' to confirm.
+```
+
+If the user already confirmed an explicit no-metadata discard commit boundary, include only that exact boundary or commit list as an additional destructive target. Otherwise omit any task-commit-list line and do not ask the operator to guess a commit list.
+
 Wait for exact confirmation.
 
-After exact typed discard confirmation and after all prechecks pass, discard is the only path that may intentionally remove a dirty linked worktree. Before any Option 4 discard cleanup, branch deletion, or worktree removal, confirm no merge, rebase, cherry-pick, or bisect is active in the checkout used to perform cleanup and in the target worktree when it is accessible. If any active operation exists, stop and ask the user instead of deleting the branch or removing the worktree.
+After exact typed discard confirmation and after all prechecks pass, discard is the only path that may intentionally remove a dirty linked worktree. Before discard cleanup, branch deletion, or worktree removal, confirm no merge, rebase, cherry-pick, or bisect is active in the checkout used to perform cleanup and in the target worktree when it is accessible. If any active operation exists, stop and ask the user instead of deleting the branch or removing the worktree.
+
+For no-metadata discard, exact typed `discard` confirms the discard decision and any approved worktree removal, but it does not authorize force branch deletion. Before any no-metadata `git branch -D <feature-branch>` after typed `discard`, require an additional explicit confirmation for force-deleting that exact branch:
+
+```text
+No recorded metadata exists. Force-delete branch <feature-branch> with git branch -D?
+
+Type 'delete branch <feature-branch>' to confirm.
+```
+
+If the user does not provide that exact additional confirmation, preserve the branch after any allowed worktree cleanup. Record whether this additional force branch deletion confirmation was given in the no-metadata cleanup recovery evidence.
 
 If any discard precheck fails before the abandoned transition, leave recorded-base metadata `status` as `active` so finishing can resume safely. After exact typed discard confirmation and after all discard/removal prechecks pass, update recorded-base metadata `status` to `abandoned` immediately before irreversible worktree/branch removal when practical. If the metadata update itself cannot be performed safely, stop before removal and ask; do not remove the worktree while metadata still falsely says active if updating was practical but failed. If worktree removal succeeds but branch deletion fails after the abandoned transition, require a later abandoned discard cleanup recovery request with the exact metadata path. In that recovery mode, treat the missing worktree only as an already-completed removal step after confirming `git worktree list --porcelain` no longer records that target worktree, then continue only with the remaining branch deletion checks.
 
-When Option 4 transitions recorded-base metadata to `abandoned`, provide a user-visible handoff that abandoned discard cleanup recovery is exact-path-only. Report the exact `metadataPath`, metadata `worktreePath`, and metadata `featureBranch` values from the validated metadata. If cleanup fails after the abandoned transition, report those same exact values again as the required recovery evidence.
+When discard transitions recorded-base metadata to `abandoned`, provide a user-visible handoff that abandoned discard cleanup recovery is exact-path-only. Report the exact `metadataPath`, metadata `worktreePath`, metadata `featureBranch`, and recorded branch identity evidence from the validated cleanup state. If cleanup fails after the abandoned transition, report those same exact values again as the required recovery evidence.
 
-If confirmed, leave the feature linked worktree first if the current shell is inside it. From the original/main worktree or another safe non-attached checkout, remove the attached feature worktree through Cleanup Worktree (Step 7) before deleting a branch that is still checked out by that worktree. Use the validated recorded `mainBranch` as `<base-branch>` when metadata exists.
+For no-metadata discard, require the user-confirmed cleanup checkout path and cleanup checkout branch before any worktree removal or branch deletion. The cleanup checkout may be the user-confirmed destination branch/worktree if one was already confirmed for the chosen flow, or another safe non-attached checkout. It must not be the target feature worktree and must not be any checkout attached to `<feature-branch>`. Do not use `<main-branch>` as a placeholder when no metadata exists.
+
+For no-metadata discard, record recovery evidence before irreversible cleanup starts: exact `<feature-branch>`, exact `<feature-worktree-path>`, cleanup checkout path and branch, feature branch tip, feature worktree HEAD before removal when available, whether forced worktree removal was explicitly accepted, and whether the additional force branch deletion confirmation for `git branch -D <feature-branch>` was explicitly accepted. If cleanup fails, additionally report whether worktree removal succeeded, whether branch deletion remains, and any unavailable branch identity token. If any required evidence is missing, stop before destructive cleanup; if a branch identity token is unavailable, later recovery must preserve the branch.
+
+If confirmed, leave the feature linked worktree first if the current shell is inside it. From the original/main worktree or another safe non-attached checkout, remove the attached feature worktree through Cleanup Worktree (Step 7) before deleting a branch that is still checked out by that worktree. Use the validated recorded `mainBranch` as `<cleanup-branch>` when metadata exists; use the user-confirmed no-metadata cleanup checkout branch when metadata does not exist.
+
+Before discard branch deletion, verify the local branch ref is exactly `refs/heads/<feature-branch>` and compare the current `refs/heads/<feature-branch>` tip to the pre-removal branch identity token captured from the feature worktree `HEAD`. If the branch is already absent, report that no branch deletion is needed. If the identity token is unavailable or the current branch tip differs from that token, stop and preserve the branch, or enter the matching cleanup recovery path with exact evidence if cleanup is already partial. For no-metadata discard, this identity check is required in addition to the separate force branch deletion confirmation after typed `discard`.
 
 After the feature worktree is no longer attached:
+
 ```bash
-# In the original/main worktree or another safe non-attached checkout
-git switch <base-branch>
+# In the original/main worktree or another safe non-attached checkout,
+# or the user-confirmed no-metadata cleanup checkout
+git switch <cleanup-branch>
 git branch -D <feature-branch>
 ```
 
@@ -435,15 +385,19 @@ Then: finish Cleanup Worktree (Step 7) if it was not already needed before branc
 
 ### Step 7: Cleanup Worktree
 
-**For Options 1 and 4, and for Option 2 only when the user asks to remove the PR worktree:**
+**For Option 1 after successful apply-back and for Option 3 after exact typed discard confirmation:**
 
-Remove the feature worktree only after the merge, push/PR, or discard decision no longer requires it and only when the current shell is not inside that attached feature checkout. For linked worktrees, operate from the original/main worktree or another safe non-attached checkout. Before removal, confirm the user-approved/discard-safe condition for the selected option still holds, the worktree path matches validated metadata when metadata exists or confirmed no-metadata refs when metadata does not exist, and no uncommitted work would be destroyed without explicit approval.
+Remove the feature worktree only after the selected option allows removal and only when the current shell is not inside that attached feature checkout. For linked worktrees, operate from the original/main worktree or another safe non-attached checkout. Before removal, confirm the user-approved or discard-safe condition for the selected option still holds, the worktree path matches validated metadata when metadata exists or confirmed no-metadata refs when metadata does not exist, and no uncommitted work would be destroyed without explicit approval.
 
-For retained PR worktree cleanup re-entry, Step 7 may be entered directly only when the user explicitly requested retained cleanup and provided exact retained cleanup evidence such as the completed metadata path and target worktree context. Use metadata `worktreePath` and `featureBranch` as the target identifiers, not the current checkout. Do not require the current branch or current worktree to match the metadata target, but require the current shell to be outside the target worktree before any removal or branch deletion.
+For completed cleanup recovery re-entry, Step 7 may be entered directly only when the user explicitly requested cleanup for exact-path completed metadata and selected the branch action: preserve the branch after worktree cleanup, or delete the temporary branch after completed apply-back. Use metadata `mainBranch`, `worktreePath`, and `featureBranch` as the cleanup checkout, target worktree, and target branch identifiers, not the current checkout. Do not require the current branch or current worktree to match the metadata target, but require the current shell to be outside the target worktree when the target still exists before any removal or branch deletion. Do not infer branch deletion from metadata, and do not run apply-back again.
 
 For abandoned discard cleanup recovery re-entry, Step 7 may be entered directly only when the user explicitly requested cleanup recovery for a previously confirmed discard and provided the exact abandoned metadata path. Use metadata `worktreePath` and `featureBranch` as the target identifiers, not the current checkout. Do not require the current branch or current worktree to match the metadata target, but require the current shell to be outside the target worktree when the target still exists before any removal or branch deletion.
 
-Before any Step 7 worktree removal or branch deletion, confirm no merge, rebase, cherry-pick, or bisect is active in the checkout used to perform cleanup and in the target worktree when it is accessible. This guard is mandatory for Option 4 discard cleanup as well as normal post-merge cleanup; if any active operation exists, stop and ask the user.
+For no-metadata cleanup recovery re-entry, Step 7 may be entered directly only when the user explicitly requested no-metadata cleanup recovery and provided the exact recorded no-metadata cleanup evidence from the earlier failed cleanup handoff. Use that evidence as the sole source for the cleanup checkout, target worktree, target branch, prior flow, branch identity tokens, and remaining cleanup state. Do not run Step 3 current branch/current worktree discovery, do not ask for an apply-back destination or diff base, and do not infer any target from the current checkout after the feature worktree is gone.
+
+Before any Step 7 worktree removal or branch deletion, confirm no merge, rebase, cherry-pick, or bisect is active in the checkout used to perform cleanup and in the target worktree when it is accessible. This guard is mandatory for discard cleanup as well as normal post-apply-back cleanup; if any active operation exists, stop and ask the user.
+
+Before normal Option 1 cleanup or discard cleanup removes the target worktree, capture branch identity evidence for deletion safety and later recovery: resolve `refs/heads/<feature-branch>` as the current branch tip, and when the target worktree is still accessible, resolve that feature worktree `HEAD` as the pre-removal branch identity token. The branch tip and feature worktree `HEAD` must match before cleanup can later delete the branch. Include both tokens in any completed cleanup, abandoned discard, or no-metadata cleanup failure handoff. If the feature worktree `HEAD` token is unavailable, branch deletion is not allowed; preserve the branch or route to the matching recovery entry path.
 
 Identify the exact target worktree with porcelain output before removal:
 
@@ -453,18 +407,29 @@ git worktree list --porcelain
 
 Use the `worktree` and `branch` records to confirm the target path is the validated `worktreePath` when metadata exists, or the user-confirmed worktree path when no metadata exists. Confirm the target `branch` record is `refs/heads/<feature-branch>` before deleting `<feature-branch>`.
 
+For completed cleanup recovery, split Step 7 into explicit recovery branches after reading `git worktree list --porcelain`:
+- If the target worktree is still present, validate that the worktree record path exactly matches normalized metadata `worktreePath`, its `branch` record is `refs/heads/<feature-branch>`, the current shell is outside that target path, and all active-operation and cleanup checkout guards pass. Before any branch deletion, resolve the local branch tip and the target worktree `HEAD`; they must be the same commit. Then remove the target worktree from the original/main worktree recorded by metadata `mainBranch` or another safe non-attached checkout. If the selected branch action is preserve branch, do not force removal of a dirty target; stop and preserve the target worktree instead. If the selected branch action is delete temporary branch after completed apply-back, forced worktree removal is allowed only under the same metadata-backed Option 1 force-removal preconditions below.
+- If the target worktree is already absent, verify through `git worktree list --porcelain` that no record exists for the exact normalized metadata `worktreePath`. In this branch, skip `git worktree remove` because worktree removal is already complete, and proceed only to the remaining branch action chosen by the user after the current branch tip is explicitly revalidated against the exact previously reported pre-removal branch identity token from the completed cleanup failure report. If the token is unavailable or mismatched, preserve the branch and limit recovery to non-deleting cleanup only. This verified absence does not permit apply-back, a new apply-back decision, discard, publication, history rewriting, metadata status changes, or branch deletion without that exact token match.
+
+Before any cleanup command in completed cleanup recovery, reconfirm this is only cleanup for already completed metadata and that the explicit branch action is still the user's intent. If the branch action is preserve branch, never delete `<feature-branch>`; report that the branch was intentionally preserved. Before deleting a branch in the delete-temporary-branch-after-completed-apply-back action, verify the user confirmed delivery, verify no worktree remains attached to `refs/heads/<feature-branch>`, verify the local branch ref is exactly `refs/heads/<feature-branch>`, and verify branch identity from the still-present target worktree `HEAD` or, when the target worktree is absent, from the exact previously reported pre-removal branch identity token. If the branch is already absent, report that no branch deletion is needed. Do not delete by branch name alone. Because completed cleanup recovery skips Step 6, include the remaining worktree removal and branch action directly in Step 7 and do not run apply-back again.
+
 For abandoned discard cleanup recovery, split Step 7 into explicit recovery branches after reading `git worktree list --porcelain`:
+- If the target worktree is still present, validate that the worktree record path exactly matches normalized metadata `worktreePath`, its `branch` record is `refs/heads/<feature-branch>`, the current shell is outside that target path, and all active-operation and cleanup checkout guards pass. Before any branch deletion, resolve the local branch tip and the target worktree `HEAD`; they must be the same commit. Then remove the target worktree from the original/main worktree or another safe non-attached checkout.
+- If the target worktree is already absent, verify through `git worktree list --porcelain` that no record exists for the exact normalized metadata `worktreePath`. In this branch, skip `git worktree remove` because worktree removal is already complete, and proceed only to the remaining validated branch deletion or cleanup remediation checks after the current branch tip is explicitly revalidated against the exact recorded pre-removal branch identity token. If the token is unavailable or mismatched, preserve the branch and limit recovery to non-deleting cleanup only. This verified absence does not permit apply-back, a new discard decision, publication, history rewriting, metadata status changes, or branch deletion without that exact token match.
 
-- If the target worktree is still present, validate that the worktree record path exactly matches normalized metadata `worktreePath`, its `branch` record is `refs/heads/<feature-branch>`, the current shell is outside that target path, and all active-operation and cleanup checkout guards pass. Then remove the target worktree from the original/main worktree or another safe non-attached checkout.
-- If the target worktree is already absent, verify through `git worktree list --porcelain` that no record exists for the exact normalized metadata `worktreePath`. In this branch, skip `git worktree remove` because worktree removal is already complete, and proceed only to the remaining validated branch deletion or cleanup remediation checks. This verified absence does not permit merge, push, PR creation, a new discard decision, clean-history preparation, or final local storage.
-
-Before any cleanup command in abandoned discard cleanup recovery, reconfirm the user intends only to finish or remediate the previously confirmed discard cleanup. Before deleting a branch in this mode, verify the local branch ref is exactly `refs/heads/<feature-branch>`, or verify it is already absent and report that no branch deletion is needed. Because abandoned discard cleanup recovery skips Step 6, include the remaining branch deletion/remediation action directly in Step 7:
+Before any cleanup command in abandoned discard cleanup recovery, reconfirm the user intends only to finish or remediate the previously confirmed discard cleanup. Before deleting a branch in this mode, verify the local branch ref is exactly `refs/heads/<feature-branch>`, and verify branch identity from the still-present target worktree `HEAD` or, when the target worktree is absent, from the exact recorded pre-removal branch identity token. If the branch is already absent, report that no branch deletion is needed. Do not delete by branch name alone. Use `<cleanup-branch>` for the validated cleanup checkout branch: metadata `mainBranch` when using the original/main worktree, or the explicitly selected safe non-attached checkout branch. Because abandoned discard cleanup recovery skips Step 6, include the remaining branch deletion/remediation action directly in Step 7:
 
 ```bash
 # In the original/main worktree or another safe non-attached checkout
-git switch <base-branch>
+git switch <cleanup-branch>
 git branch -D <feature-branch>
 ```
+
+For no-metadata cleanup recovery, split Step 7 into explicit recovery branches after reading `git worktree list --porcelain`:
+- If the target worktree is still present, validate that the worktree record path exactly matches recorded `<feature-worktree-path>`, its `branch` record is `refs/heads/<feature-branch>`, the current shell is outside that target path, the cleanup checkout exactly matches the recorded cleanup checkout path/branch, and all active-operation guards pass. The target worktree `HEAD` must match the recorded pre-removal branch identity token, and the current local branch tip must match that same token before any branch deletion.
+- If the target worktree is already absent, verify through `git worktree list --porcelain` that no record exists for the exact recorded `<feature-worktree-path>`. In this branch, skip `git worktree remove` because worktree removal is already complete, and proceed only to the remaining branch deletion check if the current local branch tip matches the recorded pre-removal branch identity token. If the token is unavailable or mismatched, stop and preserve the branch.
+
+Before any cleanup command in no-metadata cleanup recovery, reconfirm this is only cleanup recovery for the recorded prior flow. For prior no-metadata Option 1, branch deletion is allowed only when exact recovery evidence includes a valid pre-cleanup handoff record with successful tracked apply-back and successful approved file copies for all approved untracked or ignored files, plus explicit branch deletion confirmation captured during cleanup before failure. For prior no-metadata discard, branch deletion is allowed only when the exact evidence records the typed `discard` confirmation and the additional explicit force branch deletion confirmation. If the required confirmation is missing, preserve the branch. Because no-metadata cleanup recovery skips Step 6, include only the remaining validated worktree removal and branch-deletion cleanup directly in Step 7.
 
 Confirm the current shell is not inside the target worktree before removal or branch deletion:
 
@@ -474,86 +439,162 @@ git rev-parse --show-toplevel
 
 Compare the current top-level path with the target worktree path, and stop if they match or if the current path is inside the target. Move to the original/main worktree or another safe non-attached checkout first.
 
-For normal Option 4 discard with recorded-base metadata, after exact typed discard confirmation and after all discard/removal prechecks pass, update recorded-base metadata `status` to `abandoned` immediately before irreversible worktree/branch removal when practical. If the metadata update itself cannot be performed safely, stop before removal and ask; do not remove the worktree while metadata still falsely says active if updating was practical but failed. If cleanup later fails after this transition, resume only through exact-path abandoned discard cleanup recovery.
+For normal discard with recorded-base metadata, after exact typed discard confirmation and after all discard/removal prechecks pass, update recorded-base metadata `status` to `abandoned` immediately before irreversible worktree/branch removal when practical. If the metadata update itself cannot be performed safely, stop before removal and ask; do not remove the worktree while metadata still falsely says active if updating was practical but failed. If cleanup later fails after this transition, resume only through exact-path abandoned discard cleanup recovery.
 
-After the checks pass and the selected option allows worktree removal, or when abandoned discard cleanup recovery verified that the target worktree is still present:
+After the checks pass and the selected option allows worktree removal, or when completed cleanup recovery, abandoned discard cleanup recovery, or no-metadata cleanup recovery verified that the target worktree is still present:
+
 ```bash
 # Run from the original/main worktree or another safe non-attached checkout
 git worktree remove <worktree-path>
 ```
 
-For Option 4 discard, successful worktree removal alone does not complete cleanup. After metadata has transitioned to `abandoned`, any failure in required worktree removal or branch deletion must be recovered only through exact-path abandoned discard cleanup recovery.
+For normal Option 1 cleanup, successful worktree removal alone does not complete cleanup. Delete the feature branch only after apply-back succeeded, all approved files were delivered, metadata is `completed` when metadata exists, and `git worktree list --porcelain` confirms no remaining worktree is attached to `refs/heads/<feature-branch>`. Run branch deletion from the original/main worktree recorded by metadata `mainBranch`, or another safe non-attached checkout on that branch. For no-metadata Option 1 cleanup, run from the user-confirmed destination worktree or another safe non-attached checkout on the user-confirmed destination branch. Never run Option 1 branch deletion from inside the target feature worktree.
 
-If this removal cleans up a retained Option 2 PR worktree and recorded-base metadata exists, leave metadata `status` as `completed` after removal succeeds. Retained cleanup must be driven by exact user-provided metadata/path evidence, not automatic active metadata matching.
+Before Option 1 branch deletion, verify the local branch ref is exactly `refs/heads/<feature-branch>` and compare the current `refs/heads/<feature-branch>` tip to the pre-removal branch identity token captured from the feature worktree `HEAD`. If the branch is already absent, report that no branch deletion is needed. If the identity token is unavailable or the current branch tip differs from that token, stop and preserve the branch, or report the matching cleanup recovery evidence if cleanup is already partial. If any worktree remains attached to the feature branch, stop and report completed cleanup recovery evidence when metadata exists, or exact no-metadata cleanup evidence when metadata does not exist. Include the feature branch tip and feature worktree HEAD before removal when available; if either token is unavailable, state that recovery must preserve the branch.
 
-Use forced worktree removal only for Option 4 discard, and only after all of these are true:
+For metadata-backed Option 1, normal `git worktree remove <worktree-path>` is sufficient when the source worktree is clean enough to remove. Before any Option 1 worktree removal, enumerate all dirty/staged tracked files in the feature worktree and verify each one was included in the delivered result or explicitly approved for deletion/loss from the source worktree. Stop and preserve the feature worktree if any dirty/staged tracked change remains unresolved.
+
+If the feature worktree remains dirty after the tracked apply-back and all approved untracked or ignored file copies have succeeded, guarded forced removal is permitted only after all of these are true:
+- Apply-back delivered final tracked contents and every approved untracked or ignored file to the destination.
+- Force removal is allowed only when all dirty/staged tracked changes were either delivered or explicitly approved for deletion, and all relevant untracked/ignored files were either delivered or explicitly excluded/approved for deletion.
+- Any unresolved possibly relevant untracked or ignored feature file was handled by stopping earlier; no unresolved inclusion or exclusion decision remains.
+- Recorded-base metadata is already `status: completed`.
+- The current shell is outside the target feature worktree.
+- The target worktree path and target `branch refs/heads/<feature-branch>` entry exactly match validated metadata from `git worktree list --porcelain`.
+- The active-operation guard passes for the cleanup checkout and for the target worktree when accessible.
+- Any remaining source-only dirt has exact-path explicit loss acceptance; otherwise require no leftover source-only dirt and preserve the feature worktree if normal removal refuses.
+
+When every metadata-backed Option 1 force-removal precondition is satisfied and normal removal refuses because the source worktree is dirty, this command is permitted:
+
+```bash
+# Metadata-backed Option 1 only, after apply-back delivery, metadata completion, and all force prechecks
+git worktree remove --force <worktree-path>
+```
+
+For metadata-backed Option 1 cleanup:
+
+```bash
+# In the original/main worktree or another safe non-attached checkout
+git switch <main-branch>
+git branch -D <feature-branch>
+```
+
+Use this metadata-backed `git branch -D` only after apply-back delivered final contents, recorded-base metadata is `status: completed`, `git worktree list --porcelain` confirms no remaining worktree is attached to `refs/heads/<feature-branch>`, the local branch ref is exactly `refs/heads/<feature-branch>`, the current branch tip matches the pre-removal branch identity token captured from the feature worktree, and active-operation guards pass. The force-delete is for the temporary workflow branch after successful metadata-backed delivery; it is not a general unmerged-branch deletion rule. If the identity token is unavailable or mismatched, stop and preserve the branch instead of deleting by name.
+
+For no-metadata Option 1 cleanup, first attempt normal worktree removal. If the source worktree remains dirty after tracked apply-back and all approved file copies succeed, require explicit user acceptance for deleting the remaining source worktree dirt at the exact path, or preserve the source worktree. If the user accepts, forced worktree removal may be used only after the active-operation guard passes, the current shell is outside the target, and the target path and branch match the user-confirmed no-metadata evidence.
+
+For no-metadata Option 1 branch cleanup, do not silently force-delete an unmerged branch. Require explicit user confirmation for deleting the exact unmerged `<feature-branch>` after successful apply-back and worktree removal, and require the current `refs/heads/<feature-branch>` tip to match the pre-removal branch identity token captured from the feature worktree. If the user does not confirm deletion, or if the identity token is unavailable or mismatched, preserve the branch. If the user confirms deletion and the identity check passes:
+
+```bash
+# In the confirmed destination worktree or another safe non-attached checkout
+git switch <destination-branch>
+git branch -D <feature-branch>
+```
+
+If metadata-backed cleanup fails after metadata completion, do not re-run apply-back and do not modify metadata. Report completed cleanup recovery with the exact metadata path, feature branch, feature worktree path, feature branch tip, feature worktree HEAD before removal when available as the pre-removal branch identity token, any unavailable branch identity token, and the remaining cleanup state. If the target worktree is already absent during recovery, branch deletion requires that exact previously reported pre-removal branch identity token; if it is unavailable or mismatched, recovery must preserve the branch and remain limited to non-deleting cleanup only. Completed cleanup recovery resumes only the remaining worktree-removal and explicit branch-action procedure from the verified cleanup state.
+
+If no-metadata Option 1 cleanup fails after tracked apply-back and all approved file copies succeeded, do not re-run apply-back. Report exact no-metadata cleanup recovery evidence in two groups. Pre-cleanup handoff: prior flow `Option 1`, successful tracked apply-back, successful approved file copies for all approved untracked or ignored files, feature branch, feature worktree path, feature branch tip, pre-removal branch identity token from the feature worktree `HEAD`, cleanup checkout path and branch, and any unavailable branch identity token state. Cleanup-state/failure fields: whether worktree removal succeeded, whether branch deletion remains, whether forced worktree removal was explicitly accepted during cleanup, and whether branch deletion was explicitly confirmed during cleanup before failure. Resume only through the no-metadata cleanup recovery entry path; if the branch identity token is unavailable, recovery must preserve the branch.
+
+For discard, successful worktree removal alone does not complete cleanup. After metadata has transitioned to `abandoned`, any failure in required worktree removal or branch deletion must be recovered only through exact-path abandoned discard cleanup recovery.
+
+For no-metadata discard, there is no metadata transition or exact metadata path. If cleanup fails after exact typed discard confirmation, report exact no-metadata cleanup recovery evidence: prior flow `Option 3 discard`, feature branch, feature worktree path, feature branch tip, pre-removal branch identity token from the feature worktree `HEAD`, cleanup checkout path and branch, whether worktree removal succeeded, whether branch deletion remains, whether forced worktree removal was explicitly accepted, whether the additional force branch deletion confirmation was explicitly accepted, and any unavailable branch identity token. Resume no-metadata discard cleanup only through the no-metadata cleanup recovery entry path, using the recorded cleanup checkout path/branch, never from the target feature worktree and never by guessing `<main-branch>`. If a branch identity token is unavailable, recovery must preserve the branch.
+
+If completed cleanup recovery preserves the branch for retained/legacy behavior, leave metadata `status` as `completed` after removal succeeds and do not delete the branch. Completed cleanup recovery must be driven by exact user-provided metadata/path evidence and explicit branch action, not automatic active metadata matching.
+
+Use forced worktree removal only for metadata-backed Option 1 after delivery, no-metadata Option 1 after explicit source-dirt acceptance, or discard. For discard, force removal is permitted only after all of these are true:
 - The user has given the exact typed `discard` confirmation.
 - The active-operation guard passes for the cleanup checkout and the target worktree when accessible.
 - The current shell is not inside the target worktree.
 - The target path and feature branch match validated metadata, or match user-confirmed no-metadata refs.
 - The user has explicitly accepted losing dirty tracked changes, untracked files, and ignored files in the linked worktree.
-- In abandoned discard cleanup recovery, force removal is allowed only if the original Option 4 typed discard was already confirmed and the user again explicitly accepts losing dirty tracked changes, untracked files, and ignored files in the still-present target worktree.
+- In abandoned discard cleanup recovery, force removal is allowed only if the original typed discard was already confirmed and the user again explicitly accepts losing dirty tracked changes, untracked files, and ignored files in the still-present target worktree.
 
 When every discard-only force precondition is satisfied and normal removal refuses because the target worktree is dirty, this command is permitted:
 
 ```bash
-# Option 4 only, after exact typed discard confirmation and all force prechecks
+# Discard only, after exact typed discard confirmation and all force prechecks
 git worktree remove --force <worktree-path>
 ```
 
-Do not use `git worktree remove --force` for merge cleanup, PR cleanup, or any path other than confirmed Option 4 discard.
+Do not use `git worktree remove --force` for completed cleanup recovery that preserves the branch, or for any path that has not satisfied the exact force-removal preconditions for metadata-backed Option 1, no-metadata Option 1 with explicit source-dirt acceptance, or confirmed discard.
 
-**For Option 3:** Keep worktree.
+**For Option 2:** Keep worktree.
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force only after typed discard and guard prechecks) |
+| Option | Tests Required | Result | Worktree/Branch | Metadata |
+|--------|----------------|--------|-----------------|----------|
+| 1. Apply as uncommitted local changes | Yes | Task changes appear in `<main-branch>` worktree without committing | Clean up after delivery | `completed` after tracked apply-back and approved file copies |
+| 2. Keep as-is | No | Branch remains for later manual handling | Preserve | Remains active |
+| 3. Discard | No | Work is deleted after exact typed confirmation | Remove through guarded cleanup | `abandoned` immediately before irreversible removal when practical |
 
 ## Common Mistakes
 
 **Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
+- **Problem:** Applying incomplete work to the destination worktree.
+- **Fix:** Always verify tests before offering Option 1.
 
 **Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options when tests pass; when tests fail, present only the restricted two-option flow: Option 3 keep-as-is/preserve or Option 4 discard
+- **Problem:** "What should I do next?" is ambiguous.
+- **Fix:** Present exactly 3 structured options when tests pass; when tests fail, present only Option 2 keep-as-is and Option 3 discard.
 
-**Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Preserve Option 2 and Option 3 worktrees by default; clean up Option 2 only when the user explicitly asks to remove the PR worktree
+**Overwriting destination state**
+- **Problem:** Applying task changes over existing tracked, untracked, or ignored destination files.
+- **Fix:** Treat destination local state as authoritative, require clean patch checks, and refuse file-copy overwrites.
 
-**Skipping metadata cleanup**
-- **Problem:** Merge or push preserves temporary checkpoints
-- **Fix:** When recorded-base metadata exists, prepare clean history from `mainBase` before merge, push, PR creation, or final local storage
+**Ignoring checkpoint boundaries**
+- **Problem:** Dirty-start tracked edits get folded into the task result.
+- **Fix:** Use `mainBase..preexistingTrackedCheckpoint` only as pre-existing state and apply `preexistingTrackedCheckpoint..HEAD` as the task diff.
+
+**Copying generated ignored files**
+- **Problem:** Caches, build outputs, or unrelated ignored files become part of the delivered result.
+- **Fix:** Copy only exact user-approved untracked or ignored paths; exclude generated and unrelated files.
+
+**Completing metadata too early**
+- **Problem:** Metadata says `completed` before approved files are delivered.
+- **Fix:** Mark `completed` only after tracked apply-back and all approved file copies succeed, then run destructive cleanup.
+
+**Re-running apply-back after cleanup failure**
+- **Problem:** A completed run is applied twice while trying to fix cleanup.
+- **Fix:** If cleanup fails after metadata completion, report exact cleanup recovery evidence and do not re-run apply-back.
 
 **No confirmation for discard**
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+- **Problem:** Accidentally delete work.
+- **Fix:** Require exact typed "discard" confirmation.
+
+**Deleting branches by name only**
+- **Problem:** `git branch -D <feature-branch>` can delete a branch that moved after the worktree was removed.
+- **Fix:** Compare the current `refs/heads/<feature-branch>` tip to the pre-removal branch identity token captured from the feature worktree before every normal branch deletion.
+
+**Treating no-metadata discard as branch deletion approval**
+- **Problem:** Typed `discard` confirms the discard decision but not no-metadata force branch deletion.
+- **Fix:** Require the separate `delete branch <feature-branch>` confirmation before no-metadata `git branch -D`.
 
 ## Red Flags
 
 **Never:**
-- Proceed with failing tests
-- Merge without verifying tests on result
-- Delete work without confirmation
-- Force-push without explicit request
-- Merge or push a temporary checkpoint chain when recorded-base metadata exists
-- Run destructive cleanup that deletes untracked or ignored files on merge cleanup, PR cleanup, retained cleanup, clean-history preparation, final local storage, or any other non-discard path
-- Treat typed discard as a general cleanup permission. The sole exception is confirmed Option 4 typed discard after all force-removal prechecks pass and the user explicitly accepts losing dirty tracked changes, untracked files, and ignored files in that linked worktree.
+- Proceed with apply-back while tests are failing.
+- Offer branch integration, remote publication, or PR opening as normal completion.
+- Create commits as part of normal finishing.
+- Delete work without exact typed confirmation.
+- Continue when a merge, rebase, cherry-pick, or bisect is active.
+- Overwrite destination tracked, untracked, or ignored files.
+- Mark metadata `completed` before tracked apply-back and all approved file copies succeed.
+- Re-run apply-back after metadata is completed and cleanup fails.
+- Run forced worktree removal before apply-back delivery, without exact path/branch guards, or outside the allowed Option 1 and confirmed-discard force-removal preconditions.
+- Treat typed discard as a general cleanup permission. The sole exception is confirmed discard after all force-removal prechecks pass and the user explicitly accepts losing dirty tracked changes, untracked files, and ignored files in that linked worktree.
+- Run `git branch -D <feature-branch>` when the current branch tip does not match the pre-removal branch identity token captured from the feature worktree.
+- Run no-metadata `git branch -D <feature-branch>` after typed `discard` without the separate force branch deletion confirmation.
 
 **Always:**
-- Verify tests before offering options
-- Present exactly 4 options when tests pass; when tests fail, present only restricted Option 3 preserve or Option 4 discard
-- Get typed confirmation for Option 4
-- Preserve the Option 2 PR worktree by default, and clean it up only when the user explicitly asks
-- Ask before creating a final local commit
-- Preserve tracked contents during temporary checkpoint cleanup
+- Verify tests before offering Option 1.
+- Present exactly 3 options when tests pass; when tests fail, present only Option 2 keep-as-is or Option 3 discard.
+- Use checkpoint-aware task diff extraction when `preexistingTrackedCheckpoint` is non-null.
+- Preserve destination local changes unless the user gives exact scoped approval and the task patch applies cleanly.
+- Enumerate and resolve untracked and ignored feature files before apply-back.
+- Mark metadata `completed` only after the result is delivered to the destination worktree.
+- Capture and compare branch identity tokens before normal Option 1 or discard branch deletion.
+- Preserve the feature worktree and leave metadata active whenever apply-back cannot be completed safely.
 
 ## Integration
 

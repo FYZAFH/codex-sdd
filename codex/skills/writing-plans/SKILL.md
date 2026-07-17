@@ -82,7 +82,7 @@ When code changes are expected, read the spec for exception and global-state con
 - If the spec includes exception behavior constraints, turn them into concrete implementation and review instructions. Do not add new throw sites unless each one has clear semantic, diagnostic, or recovery value.
 - Convert spec-defined failure boundaries into explicit implementer steps and reviewer expectations for allowed catches, propagation, normalization, diagnostics, and state consistency.
 - Require reviewers to check that broad catches, silent fallback, duplicate fallback handling, and defensive wrapping of deterministic or already-normalized callees are absent unless the spec explicitly justifies them.
-- If the spec includes global-state constraints, plan class or instance scope where sufficient. If a global constant is necessary, place it under an appropriate `consts` directory following project conventions.
+- If the spec includes global-state constraints, plan class or instance scope where sufficient. In implementation and review guidance, prohibit single-use module-level constants except for stable boundary cases: external protocols, file formats, environment variable names, CLI/API contracts, schema fields, or serialized or externally visible status values/codes. Allowed single-use exceptions may remain module-local when that stable boundary is local to the module. Constants needing stable reference across tests, docs, or multiple modules should go under an appropriate `consts` directory following project conventions. Otherwise use a local variable or inline literal.
 
 ## Bite-Sized Task Granularity
 
